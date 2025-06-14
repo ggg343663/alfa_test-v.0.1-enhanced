@@ -1,0 +1,289 @@
+<!--
+DTC Minimal UI/UX Logic
+
+- ทุก input/ปุ่ม/ผลลัพธ์ จัดวางเป็นกลุ่มและแยกโทนสีตาม logic ใช้งาน
+- กลุ่ม Ticket/Slot/Meta: สีเทาอ่อน #f6f7fa
+- กลุ่ม Password, PIN, Secret: สีเหลืองอ่อน #fffde7
+- กลุ่มปุ่ม Action (Generate/Export/Regen): ฟ้า, เหลือง, ฟ้าอ่อน ตามลำดับ
+- Navigation Bar: ปุ่มม่วงจาง/เทาอ่อน (Back/Home/Next) ขนาดเท่ากันทั้ง site
+
+[Section A] Key & Batch Info  
+    - Password, PIN, Secret, Batch Name, จำนวน QR (ปุ่ม +/– หรือ custom)
+    - label/hint สีเทาอ่อน #90a4ae, ขนาดเล็กใต้ input
+
+[Section B] Action  
+    - ปุ่มฟ้าใหญ่ "Generate QR Batch"
+
+[Section C] ผลลัพธ์/Preview  
+    - QR Preview Box (PNG/SVG), hash1, Commitment Box (hash2 สีฟ้าหรือเทาอ่อน)
+    - ปุ่มเหลือง Export Ticket / ฟ้า Export QR / ฟ้าอ่อน Export Log
+
+[Section D] Regen QR  
+    - ช่อง Ticket (สีเทาอ่อน), ปุ่ม Upload/QR
+    - ช่อง Slot ID, Prev Hash, Timestamp, Nonce (เทาอ่อน)
+    - Password, PIN, Secret (เหลืองอ่อน)
+    - ปุ่ม Regen (ฟ้า)
+
+[Section E] Audit Chain  
+    - Input QR/Commitment Hash (hash2) + ปุ่ม Audit (ฟ้าเล็ก)
+    - กล่อง audit chain (เจ้าของ/ลำดับ chain), expand/collapse ได้
+
+[Section F] Navigation Bar  
+    - Back | Home | Next (ปุ่มขนาดเท่ากัน)
+
+Style  
+    - input/box สูง 36–44px, margin/padding 12–20px
+    - label/hint #90a4ae, ขนาดเล็ก
+    - ผลลัพธ์/preview/log ไม่กินพื้นที่หลัก
+    - ปุ่ม Action เด่น, ฟอร์มอ่านง่าย กรอกง่าย
+    - รองรับ mobile (responsive)
+    - สีหลัก #2196f3 (ฟ้า), #90a4ae (เทาอ่อน), #ffd600 (เหลือง), #ede7f6 (ม่วงจาง)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Transfer QR - DTC System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6faff; margin: 0; padding: 0; }
+    .container { max-width: 440px; margin: 2.5em auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 40px #1376b114, 0 1.5px 7px #36d86d1c; padding: 2.3em 1.3em 2em 1.3em;}
+    .nav-row { display: flex; justify-content: space-between; margin-bottom: 1.5em; }
+    .nav-btn {
+      background: #ede7f6; color: #246bfd; border: none; border-radius: 8px; padding: 0.53em 1.4em;
+      font-size: 1.03em; font-weight: 500; cursor: pointer; transition: background 0.18s;
+    }
+    .nav-btn:hover { background: #d1c4e9; }
+    h2 { text-align: center; color: #219150; margin-bottom: 1.2em; }
+    .row { display: flex; align-items: center; gap: 0.35em; margin-bottom: 1.1em; flex-wrap: wrap; }
+    .row input[type="text"] { flex: 1; padding: 0.68em 0.8em; border: 1.5px solid #c9e8d4; border-radius: 6px; font-size: 1.08em; background: #f5f7fa; outline: none; transition: border .2s;}
+    .row input[type="text"]:focus, .pw-input:focus { border: 1.5px solid #246bfd; background: #f0f7ff;}
+    .icon-btn { background: none; border: none; padding: 0.13em; cursor: pointer; transition: background 0.15s; border-radius: 5px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center;}
+    .icon-btn img { width: 25px; height: 25px; }
+    .copy-btn { background: #ebfbee; border: none; border-radius: 4px; cursor: pointer; color: #219150; font-size: 1em; font-weight: 500; padding: 0.36em 1.05em; margin-left: 0.2em; margin-right: 0.2em; transition: background .18s; }
+    .copy-btn:active { background: #d1fae5; color: #176d38; }
+    .copy-success { color: #16a34a; font-size: 0.95em; margin-left: 0.27em; min-width: 2.4em; display: inline-block; }
+    .receiver-group, .yellow-group { margin-bottom: 1.23em; background: #f6fbfe; border-radius: 7px; padding: 0.9em 1em 0.85em 1em; box-shadow: 0 1px 4px #d0e8fd12;}
+    .receiver-group label, .yellow-group label { font-size: 1.03em; color: #246bfd; margin-bottom: 0.32em; display: block; font-weight: 600;}
+    .receiver-group input, .yellow-group input { margin-top: 0.22em; width: 100%; padding: 0.7em 0.9em; border: 1.3px solid #c7d5ee; border-radius: 6px; font-size: 1em; background: #fafdff; outline: none; margin-bottom: 0.6em;}
+    .pw-input { border: 1.5px solid #ffe066; background: #fffbe7;}
+    .pw-input:focus { border: 1.5px solid #f6a800; background: #fffdf1; }
+    .input-error { border: 2px solid #dc2626 !important; background: #fef2f2;}
+    .input-err { color: #dc2626; font-size: 0.97em; margin-bottom: 0.45em;}
+    .mini-btn { width: 100%; background: linear-gradient(90deg, #219150 68%, #246bfd 100%); color: #fff; border: none; font-weight: bold; border-radius: 8px; font-size: 1.08em; margin: 0.36em 0 0.2em 0; padding: 0.68em 0; transition: background .2s, box-shadow .17s; box-shadow: 0 1.5px 9px #60a5fa12; cursor: pointer; }
+    .mini-btn:active { background: #176d38; }
+    #previewBox { margin-top: 0.4em; padding: 0.9em 0.7em; border-radius: 7px; background: #f0fdf4; font-size: 1.04em; box-shadow: 0 0.7px 4px #67e8f9a2; border-left: 6px solid #15803d; min-height: 2.2em;}
+    #qr-reader { margin-top: 1.2em; }
+    .export-btn { margin-top: 0.7em; width: 100%; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: 600; padding: 0.69em 0; font-size: 1em;}
+    .export-btn:active { background: #1747a1;}
+    @media (max-width: 540px) { .container { padding: 1em 0.1em 1.3em 0.1em; border-radius: 0; } .nav-row {margin-bottom:1.1em;} .row { flex-direction: column; gap: 0.11em;} .mini-btn, .export-btn { font-size: 1em; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-row">
+      <button class="nav-btn" onclick="window.location.href='index.html'">Back</button>
+      <button class="nav-btn" onclick="window.location.href='index.html'">Home</button>
+    </div>
+    <h2>Transfer QR</h2>
+
+    <div class="row">
+      <input type="text" id="qrhash" maxlength="64" autocomplete="off" placeholder="Enter QR Hash" />
+      <button class="icon-btn" title="Scan QR" onclick="openQRScanner()" id="scanBtn">
+        <img src="/scan-qr-icon.png" alt="Scan QR"/>
+      </button>
+      <input type="file" accept="image/*" style="display:none;" id="imgQRInput" onchange="scanImageQR(this)">
+      <button class="icon-btn" title="Import QR Image" onclick="document.getElementById('imgQRInput').click()" id="imgBtn">
+        <img src="/gallery-icon.png" alt="Gallery"/>
+      </button>
+      <button class="copy-btn" onclick="copyField('qrhash')">Copy</button>
+      <span id="copyHashSuccess" class="copy-success"></span>
+    </div>
+
+    <div class="receiver-group">
+      <label for="recipientpk">Receiver Public Key (42 chars, 0x...):</label>
+      <div style="display:flex;align-items:center;gap:0.2em;">
+        <input type="text" id="recipientpk" maxlength="42" autocomplete="off" placeholder="Enter recipient's public key" />
+        <button class="copy-btn" onclick="copyField('recipientpk')">Copy</button>
+        <span id="copyPkSuccess" class="copy-success"></span>
+      </div>
+      <div class="input-err" id="pubkeyErr"></div>
+    </div>
+
+    <div class="yellow-group">
+      <label for="password">Your Password (6-12 chars, letters and numbers):</label>
+      <input class="pw-input" type="password" id="password" maxlength="12" minlength="6" autocomplete="off" placeholder="Enter your password" />
+
+      <label for="pin">Your PIN (6 digits, ATM-style):</label>
+      <input class="pw-input" type="password" id="pin" maxlength="6" minlength="6" pattern="\d{6}" autocomplete="off" placeholder="Enter your 6-digit PIN" />
+    </div>
+
+    <button class="mini-btn" onclick="preview()" type="button" id="previewBtn">Preview Transfer</button>
+    <div id="previewBox"></div>
+    <button class="mini-btn" onclick="confirmTransfer()" type="button" style="display:none;" id="confirmBtn">Confirm Transfer</button>
+    <button class="export-btn" style="display:none;" id="exportLogBtn">Export Transfer Log (JSON)</button>
+
+    <div id="qr-reader"></div>
+  </div>
+  <script>
+    let qrReader = null;
+    let lastTransferLog = null;
+    window.onload = function() {
+      document.getElementById('qrhash').focus();
+      if (!navigator.clipboard) {
+        document.getElementById('scanBtn').disabled = true;
+        document.getElementById('imgBtn').disabled = true;
+      }
+    };
+    function openQRScanner() {
+      if (qrReader) try { qrReader.stop(); } catch {}
+      const qrDiv = document.getElementById('qr-reader');
+      qrDiv.style.display = 'block';
+      qrDiv.innerHTML = '';
+      qrReader = new Html5Qrcode("qr-reader");
+      qrReader.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 180 },
+        qrCodeMessage => {
+          document.getElementById('qrhash').value = qrCodeMessage;
+          qrReader.stop();
+          qrDiv.style.display = 'none';
+          document.getElementById('recipientpk').focus();
+        }
+      ).catch(err => {
+        alert("Cannot open camera: " + err);
+        qrDiv.style.display = 'none';
+      });
+    }
+    function scanImageQR(input) {
+      if (input.files && input.files.length > 0) {
+        const file = input.files[0];
+        const qrDiv = document.getElementById('qr-reader');
+        qrDiv.style.display = 'block';
+        qrDiv.innerHTML = '';
+        if (qrReader) try { qrReader.clear(); } catch {}
+        qrReader = new Html5Qrcode("qr-reader");
+        qrReader.scanFile(file, true)
+          .then(qrCodeMessage => {
+            document.getElementById('qrhash').value = qrCodeMessage;
+            qrReader.clear();
+            qrDiv.style.display = 'none';
+            document.getElementById('recipientpk').focus();
+          })
+          .catch(() => {
+            alert("QR not found in this image.");
+            qrDiv.style.display = 'none';
+          });
+      }
+    }
+    function validatePubkey(pk) {
+      return /^0x[a-fA-F0-9]{40}$/.test(pk);
+    }
+    function validateInputs() {
+      const hash = document.getElementById('qrhash').value.trim();
+      const pub = document.getElementById('recipientpk').value.trim();
+      const pw = document.getElementById('password').value.trim();
+      const pin = document.getElementById('pin').value.trim();
+      let valid = true;
+      document.getElementById('pubkeyErr').textContent = "";
+      document.getElementById('recipientpk').classList.remove('input-error');
+      document.getElementById('qrhash').classList.remove('input-error');
+      document.getElementById('password').classList.remove('input-error');
+      document.getElementById('pin').classList.remove('input-error');
+      if (hash.length !== 64) {
+        valid = false;
+        document.getElementById('qrhash').classList.add('input-error');
+      }
+      if (!validatePubkey(pub)) {
+        valid = false;
+        document.getElementById('recipientpk').classList.add('input-error');
+        if (pub) document.getElementById('pubkeyErr').textContent = "Public Key must start with 0x and be 42 chars.";
+      }
+      if (pw.length < 6 || pw.length > 12 || !/[A-Za-z]/.test(pw) || !/\d/.test(pw)) {
+        valid = false;
+        document.getElementById('password').classList.add('input-error');
+      }
+      if (!/^\d{6}$/.test(pin)) {
+        valid = false;
+        document.getElementById('pin').classList.add('input-error');
+      }
+      return valid;
+    }
+    function preview() {
+      const isValid = validateInputs();
+      const previewBox = document.getElementById('previewBox');
+      const confirmBtn = document.getElementById('confirmBtn');
+      const exportBtn = document.getElementById('exportLogBtn');
+      if (!isValid) {
+        previewBox.textContent = "⚠️ Please complete all fields correctly.";
+        confirmBtn.style.display = "none";
+        exportBtn.style.display = "none";
+        return;
+      }
+      const hash = document.getElementById('qrhash').value.trim();
+      const pub = document.getElementById('recipientpk').value.trim();
+      const timestamp = new Date().toISOString();
+      previewBox.innerHTML =
+        `<b>Preview Transfer</b><br>
+        <b>QR Hash:</b> <code>${hash}</code><br>
+        <b>Receiver Public Key:</b> <code>${pub}</code><br>
+        <b>Sign Message:</b><br>
+        <pre style="background:#e7fbe8;color:#246bfd;border-radius:6px;border-left:4px solid #219150;padding:0.8em 0.7em 0.8em 1em;font-size:1em;">{
+  "qr_hash": "${hash}",
+  "to_pubkey": "${pub}",
+  "signed_by": "(your_address)",
+  "sig": "(private_sign)",
+  "timestamp": "${timestamp}"
+}</pre>
+        <small style="color:#666;">(Sign this payload with your private key derived from password+PIN.)</small>`;
+      confirmBtn.style.display = "block";
+      exportBtn.style.display = "none";
+    }
+    function confirmTransfer() {
+      document.getElementById('confirmBtn').disabled = true;
+      const hash = document.getElementById('qrhash').value.trim();
+      const pub = document.getElementById('recipientpk').value.trim();
+      const timestamp = new Date().toISOString();
+      lastTransferLog = {
+        qr_hash: hash,
+        to_pubkey: pub,
+        signed_by: "(your_address)",
+        sig: "(private_sign)",
+        timestamp
+      };
+      document.getElementById('previewBox').innerHTML = `<b>✅ Transfer submitted!</b><br>
+        <span style="color:#15803d">You can now export this log as JSON for your records.</span>`;
+      document.getElementById('confirmBtn').style.display = "none";
+      document.getElementById('exportLogBtn').style.display = "block";
+      document.getElementById('qrhash').value = "";
+      document.getElementById('recipientpk').value = "";
+      document.getElementById('password').value = "";
+      document.getElementById('pin').value = "";
+      setTimeout(()=>{document.getElementById('confirmBtn').disabled = false;},800);
+    }
+    document.getElementById('exportLogBtn').addEventListener('click', ()=>{
+      if (!lastTransferLog) return;
+      const blob = new Blob([JSON.stringify(lastTransferLog, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr_transfer_log_${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+    function copyField(id) {
+      const el = document.getElementById(id);
+      el.select(); el.setSelectionRange(0, 9999);
+      navigator.clipboard.writeText(el.value);
+      if (id === 'qrhash') showCopySuccess('copyHashSuccess');
+      else if (id === 'recipientpk') showCopySuccess('copyPkSuccess');
+    }
+    function showCopySuccess(elid) {
+      const el = document.getElementById(elid);
+      el.textContent = "Copied!";
+      setTimeout(()=>{el.textContent = "";},1200);
+    }
+  </script>
+</body>
+</html>
