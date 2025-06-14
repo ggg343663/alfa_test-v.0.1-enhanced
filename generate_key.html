@@ -104,27 +104,25 @@
       text-align: center;
       color: #3f51b5; /* สีฟ้า/ม่วง */
       background: none;
-      font-weight: 600; /* อาจไม่จำเป็นสำหรับ SVG */
+      font-weight: 600;
       border-radius: 7px;
       margin: 0 0.17em;
-      font-size: 0.96em; /* อาจไม่จำเป็นสำหรับ SVG แต่ไม่กระทบ */
+      font-size: 0.96em;
       min-height: 36px;
       text-decoration: none;
       transition: background 0.13s, color 0.13s;
-      display: flex;
-      flex-direction: column; /* จัดวางไอคอนและข้อความ (ถ้ามี) แนวตั้ง */
+      display: flex; /* ใช้ flexbox */
+      flex-direction: row; /* จัดวางข้อความแนวนอน */
       align-items: center;
       justify-content: center;
+      gap: 0.5em; /* เพิ่มระยะห่างระหว่างข้อความ (ถ้ามี) */
     }
     .nav-bar a svg { /* Style for SVG icons within nav links */
-        width: 24px; /* ขนาดไอคอน */
-        height: 24px;
-        fill: currentColor; /* ใช้สี text ของลิงก์ */
-        margin-bottom: 2px; /* ระยะห่างจากข้อความ */
+        display: none; /* ซ่อน SVG icons */
     }
     .nav-bar a span { /* Style for text label now visible */
-        font-size: 0.8em; /* ขนาดข้อความใต้ไอคอน (ปรับให้ใหญ่ขึ้นเล็กน้อย) */
-        font-weight: normal;
+        font-size: 0.96em; /* ขนาดข้อความ */
+        font-weight: 600; /* น้ำหนักข้อความ */
         display: block; /* ทำให้ข้อความแสดงผล */
     }
     .nav-bar a:hover {
@@ -217,19 +215,19 @@
 
   <!-- Navigation Bar -->
   <div class="nav-bar">
-    <a href="index.html" aria-label="ย้อนกลับ"> {/* Added aria-label */}
+    <a href="index.html" aria-label="ย้อนกลับ">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
           <path d="M14 7l-5 5 5 5V7z"/> {/* Simple left arrow */}
         </svg>
         <span>Back</span> {/* ข้อความสำหรับผู้ใช้งานปกติและ Screen Reader */}
     </a>
-    <a href="index.html" class="active" aria-label="หน้าหลัก"> {/* Added aria-label */}
+    <a href="index.html" class="active" aria-label="หน้าหลัก">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
           <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/> {/* Simple house outline */}
         </svg>
         <span>Home</span> {/* ข้อความสำหรับผู้ใช้งานปกติและ Screen Reader */}
     </a>
-    <a href="index.html" aria-label="ถัดไป"> {/* Added aria-label */}
+    <a href="index.html" aria-label="ถัดไป">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
           <path d="M10 17l5-5-5-5v10z"/> {/* Simple right arrow */}
         </svg>
