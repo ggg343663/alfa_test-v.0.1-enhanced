@@ -22,8 +22,8 @@
     .btn-main { /* Preview QR Batch button */
       width:100%; margin:18px 0 0 0; padding:1em 1.2em; color:#fff; background:linear-gradient(90deg,#2196f3 70%,#219150 100%); font-weight:bold; font-size:1.16em; border-radius:8px; border:none; cursor:pointer; box-shadow:0 2px 9px #2196f344; transition: background 0.2s;
     }
-    .btn-main:active { background:#176d38; } /* Still use green for active, or match the gradient end color */
-    .btn-main:hover:not([disabled]) { filter: brightness(0.95); } /* Hover effect */
+    .btn-main:active { background:#176d38; }
+    .btn-main:hover:not([disabled]) { filter: brightness(0.95); }
     .btn-main[disabled] { opacity:.56; cursor:not-allowed; }
 
     .btn-confirm { /* Confirm & Mint button in modal */
@@ -41,11 +41,11 @@
     .input-group label { font-weight: bold; color: #666; font-size: 0.95em; margin-bottom: 5px; display:block;}
     .input-group input[type="password"], .input-group input[type="text"], .input-group textarea {
       width: calc(100% - 24px); padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1em; background-color: #ffffff; box-sizing: border-box;
-      transition: border-color 0.2s, background-color 0.2s; /* Added transition */
+      transition: border-color 0.2s, background-color 0.2s;
     }
     .input-group input[type="password"]:focus, .input-group input[type="text"]:focus, .input-group textarea:focus {
-        border-color: #2196f3; /* Blue focus border */
-        background-color: #f0f7ff; /* Lighter background on focus */
+        border-color: #2196f3;
+        background-color: #f0f7ff;
     }
 
     .label-hint { display:block; font-size:0.81em; color:#90a4ae; margin-top:5px;}
@@ -53,13 +53,13 @@
 
     .qty-input-group { display:flex; align-items:center; gap:5px;}
     .qty-input-group input { text-align:center; width:70px; margin-bottom:0 !important;}
-    .qty-button { /* Quantity +/- buttons */
-        background-color: #e3f2fd; /* Light blue */
-        border: 1px solid #90caf9; /* Soft blue border */
+    .qty-button {
+        background-color: #e3f2fd;
+        border: 1px solid #90caf9;
         border-radius: 5px; padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 1.1em; color: #2196f3; transition: background-color 0.1s;
     }
-    .qty-button:hover { background-color: #bbdefb; } /* Darker blue on hover */
-    .qty-button:active { background-color: #90caf9; } /* Even darker on active */
+    .qty-button:hover { background-color: #bbdefb; }
+    .qty-button:active { background-color: #90caf9; }
 
     .footer-note { text-align:center; margin-top:2.4em; color:#b0bec5; font-size:0.97em; }
 
@@ -95,7 +95,7 @@
 
     .export-ticket-btn { background:#ffd600; color:#222;}
     .export-qr-btn { background:#2196f3; color:#fff;}
-    .export-log-btn { background:#2563eb; color:#fff;} /* Changed to a solid blue for action button consistency */
+    .export-log-btn { background:#2563eb; color:#fff;}
 
     .export-btn:hover { filter:brightness(0.93);}
     .timestamp-note { text-align:right; color:#607d8b; font-size:0.85em; margin-top:10px;}
@@ -113,7 +113,7 @@
         padding: 0.8em;
         border-radius: 8px;
         font-weight: bold;
-        display: none; /* Hidden by default */
+        display: none;
         transition: opacity 0.3s ease-in-out;
     }
     .status-success { background-color: #eafaf1; color: #219150; border: 1px solid #219150; }
@@ -182,7 +182,9 @@
     <button class="btn-main" id="previewBtn">Preview QR Batch</button>
   </div>
 
-  <div id="statusMessage" class=""></div> <div id="previewModal">
+  <div id="statusMessage" class=""></div>
+  <!-- Preview Modal -->
+  <div id="previewModal">
     <div class="preview-box">
       <div class="preview-title">Preview QR Batch (Confirm Before Mint)</div>
       <div class="preview-details" id="previewDetails"></div>
@@ -192,13 +194,14 @@
       </div>
     </div>
   </div>
+  <!-- Output Section -->
   <div class="qr-output-block" id="qrOutputSection" style="display:none;">
     <div class="block-title">Generated QR Preview &amp; Hashes</div>
     <div class="qr-output-content">
       <div class="qr-preview-box">
         <label>QR Preview (First QR):</label>
         <img id="qrCodeImage" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="QR Code Preview" />
-        <span class="label-hint" id="qrContentHint">Content: <span id="qrContentDisplay"></span></span>
+        <!-- Removed: <span class="label-hint" id="qrContentHint">Content: <span id="qrContentDisplay"></span></span> -->
       </div>
       <div class="qr-hashes-box">
         <div class="hash-display">
@@ -218,7 +221,12 @@
       <button class="export-btn export-ticket-btn" id="exportTicketBtn">Export Ticket (JSON)</button>
       <button class="export-btn export-qr-btn" id="exportQrBtn">Export QR Batch (PNG/SVG)</button>
       <button class="export-btn export-log-btn" id="exportLogBtn">Export Log (Batch Details)</button>
-      <button class="export-btn export-log-btn" id="clearFormBtn" style="background:#e0e0e0; color:#333;">Clear All</button> </div>
+    </div>
+    <!-- Added qrContentDisplay outside qr-preview-box for clarity and compliance with "results not prominent" -->
+    <div class="hash-display" style="margin-top:1em;">
+      <label>Generated QR Content (JSON):</label>
+      <pre id="qrContentDisplay" style="font-size:0.97em;color:#234;white-space:pre-wrap;"></pre>
+    </div>
   </div>
   <div class="navbar">
     <a href="generate_key.html" class="nav-btn">Back (Generate Key)</a>
@@ -261,7 +269,7 @@
     function validateInputs(d) {
         let isValid = true;
         const statusMessage = document.getElementById('statusMessage');
-        statusMessage.style.display = 'none'; // Hide previous messages
+        statusMessage.style.display = 'none';
 
         // Basic validation for presence
         if (!d.issuerPublicKey) { showStatus('Please enter your Public Key.', 'error'); isValid = false; }
@@ -278,10 +286,10 @@
         return isValid;
     }
 
-    // --- New: Global variable to store the final generated QR content for export ---
+    // Global variable to store the final generated QR content for export
     let generatedQrContentData = null; 
 
-    // --- New: Function to show status messages ---
+    // Function to show status messages
     function showStatus(message, type) {
         const statusMessageDiv = document.getElementById('statusMessage');
         statusMessageDiv.textContent = message;
@@ -298,7 +306,7 @@
     const previewModal = document.getElementById('previewModal');
     document.getElementById('previewBtn').onclick = async () => {
       const d = collectInputs();
-      if (!validateInputs(d)) { return; } // Validation messages handled by validateInputs
+      if (!validateInputs(d)) { return; }
       // Compose preview HTML
       document.getElementById('previewDetails').innerHTML = `
         <b>Issuer Public Key:</b><br><span style="color:#246bfd;">${d.issuerPublicKey}</span><br>
@@ -314,18 +322,17 @@
     // Confirm & Mint
     document.getElementById('confirmBtn').onclick = async ()=>{
       const d = collectInputs();
-      if (!validateInputs(d)) { return; } // Re-validate just in case
+      if (!validateInputs(d)) { return; }
 
       previewModal.style.display = 'none';
-      showStatus('Processing and Minting QR batch...', 'success'); // Show processing status
+      showStatus('Processing and Minting QR batch...', 'success');
 
       // Chain meta
       const now = new Date();
       const timestamp = now.toISOString();
-      // Generate a unique slotId per batch
       const slotId = `DTC_SLOT_${Math.random().toString(36).substring(2,8).toUpperCase()}-${now.getTime()}`; 
       const nonce = Math.random().toString(36).substring(2,10);
-      const prevHash = "0000000000000000000000000000000000000000000000000000000000000000"; // Genesis/Initial hash for Minting
+      const prevHash = "0000000000000000000000000000000000000000000000000000000000000000";
 
       // Hash1: SHA256(issuerPublicKey|secretData|batchName|quantity|timestamp|slotId|nonce|prevHash)
       const hash1_input = d.issuerPublicKey + '|' + d.secretData + '|' + d.batchName + '|' + d.quantity + '|' + timestamp + '|' + slotId + '|' + nonce + '|' + prevHash;
@@ -337,7 +344,7 @@
 
       // QR Content structure (Ticket)
       const qrContentJson = {
-        version: "DTC_0.7.6.1", // System version
+        version: "DTC_0.7.6.1",
         type: "QR_Batch_Mint",
         issuerPublicKey: d.issuerPublicKey,
         data: d.secretData,
@@ -347,18 +354,18 @@
             timestamp: timestamp, 
             slotId: slotId, 
             nonce: nonce,
-            prev_hash: prevHash, // Prev hash for this minting record
-            system_meta: { // Additional meta about the system generating the QR
+            prev_hash: prevHash,
+            system_meta: { 
                 appVersion: "1.0.0 (Web UI)",
                 deviceName: "User Browser",
-                os: "N/A", // In a real app, detect OS here
-                location: "Thailand", // Based on current context
+                os: "N/A",
+                location: "Thailand",
                 generatedTime: new Date().toISOString()
             }
         },
         hash1: hash1, 
         hash2: hash2,
-        signature: "0xMOCKSIGNATURE" // Placeholder for actual signature
+        signature: "0xMOCKSIGNATURE"
       };
       
       // Store the generated data for export
@@ -393,7 +400,7 @@
       showStatus('QR Batch image exported successfully!', 'success');
     };
 
-    // --- Modified: Export Log Button ---
+    // Modified: Export Log Button
     document.getElementById('exportLogBtn').onclick = ()=>{
       if (!generatedQrContentData) {
         showStatus('No QR data generated yet. Please click "Confirm & Mint" first.', 'error');
@@ -405,11 +412,11 @@
           version: generatedQrContentData.version,
           type: generatedQrContentData.type,
           issuerPublicKey: generatedQrContentData.issuerPublicKey,
-          data: generatedQrContentData.data, // Secret data
-          meta: generatedQrContentData.meta, // Contains batchName, quantity, timestamp, slotId, nonce, prev_hash, and system_meta
+          data: generatedQrContentData.data,
+          meta: generatedQrContentData.meta,
           hash1: generatedQrContentData.hash1,
           hash2: generatedQrContentData.hash2,
-          signature: generatedQrContentData.signature // Mock signature
+          signature: generatedQrContentData.signature
       };
 
       const filename = `DTC_Mint_Log_${Date.now()}.json`;
@@ -417,27 +424,6 @@
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
       showStatus('Mint Log exported successfully!', 'success');
-    };
-
-    // --- New: Clear All Button ---
-    document.getElementById('clearFormBtn').onclick = () => {
-        document.getElementById('issuerPublicKey').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('pin').value = '';
-        document.getElementById('secretData').value = '';
-        document.getElementById('batchName').value = '';
-        document.getElementById('quantity').value = '1';
-        
-        // Reset output section
-        document.getElementById('qrOutputSection').style.display = 'none';
-        document.getElementById('qrCodeImage').src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-        document.getElementById('qrContentDisplay').textContent = '';
-        document.getElementById('hash1').textContent = '';
-        document.getElementById('hash2').textContent = '';
-        document.getElementById('generatedTimestamp').textContent = '';
-        
-        generatedQrContentData = null; // Clear stored data
-        showStatus('Form cleared!', 'success');
     };
   </script>
 </body>
