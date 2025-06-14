@@ -1,0 +1,289 @@
+<!--
+DTC Minimal UI/UX Logic
+
+- ทุก input/ปุ่ม/ผลลัพธ์ จัดวางเป็นกลุ่มและแยกโทนสีตาม logic ใช้งาน
+- กลุ่ม Ticket/Slot/Meta: สีเทาอ่อน #f6f7fa
+- กลุ่ม Password, PIN, Secret: สีเหลืองอ่อน #fffde7
+- กลุ่มปุ่ม Action (Generate/Export/Regen): ฟ้า, เหลือง, ฟ้าอ่อน ตามลำดับ
+- Navigation Bar: ปุ่มม่วงจาง/เทาอ่อน (Back/Home/Next) ขนาดเท่ากันทั้ง site
+
+[Section A] Key & Batch Info  
+    - Password, PIN, Secret, Batch Name, จำนวน QR (ปุ่ม +/– หรือ custom)
+    - label/hint สีเทาอ่อน #90a4ae, ขนาดเล็กใต้ input
+
+[Section B] Action  
+    - ปุ่มฟ้าใหญ่ "Generate QR Batch"
+
+[Section C] ผลลัพธ์/Preview  
+    - QR Preview Box (PNG/SVG), hash1, Commitment Box (hash2 สีฟ้าหรือเทาอ่อน)
+    - ปุ่มเหลือง Export Ticket / ฟ้า Export QR / ฟ้าอ่อน Export Log
+
+[Section D] Regen QR  
+    - ช่อง Ticket (สีเทาอ่อน), ปุ่ม Upload/QR
+    - ช่อง Slot ID, Prev Hash, Timestamp, Nonce (เทาอ่อน)
+    - Password, PIN, Secret (เหลืองอ่อน)
+    - ปุ่ม Regen (ฟ้า)
+
+[Section E] Audit Chain  
+    - Input QR/Commitment Hash (hash2) + ปุ่ม Audit (ฟ้าเล็ก)
+    - กล่อง audit chain (เจ้าของ/ลำดับ chain), expand/collapse ได้
+
+[Section F] Navigation Bar  
+    - Back | Home | Next (ปุ่มขนาดเท่ากัน)
+
+Style  
+    - input/box สูง 36–44px, margin/padding 12–20px
+    - label/hint #90a4ae, ขนาดเล็ก
+    - ผลลัพธ์/preview/log ไม่กินพื้นที่หลัก
+    - ปุ่ม Action เด่น, ฟอร์มอ่านง่าย กรอกง่าย
+    - รองรับ mobile (responsive)
+    - สีหลัก #2196f3 (ฟ้า), #90a4ae (เทาอ่อน), #ffd600 (เหลือง), #ede7f6 (ม่วงจาง)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Check QR Status – DTC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; color: #333; margin:0; padding:0;}
+    .container { max-width: 700px; margin: 2.3em auto 0 auto; background: #fff; border-radius: 15px; box-shadow: 0 2px 16px #90caf933; padding: 2em 1.3em 2.2em 1.3em;}
+    h2 { color: #219150; text-align: center; margin-bottom: 1.35em; font-size: 1.38em;}
+    #nowTimestamp { text-align: right; color: #90a4ae; font-size: 0.97em; margin-bottom: 0.5em; }
+    #batchProgress { margin-bottom: 1.2em;}
+    .progress-block { background: #fafdff; border-radius: 10px; padding: 1em 1em 0.8em 1em; margin-bottom: 0.95em; border:1.5px solid #e0e7ef;}
+    .progress-title { font-weight: bold; color: #246bfd;}
+    .batch-status-bar { display: flex; flex-wrap: wrap; gap: 2.1em; margin: 0.6em 0 0.2em 0; }
+    .progress-stats { color: #26733e; margin-top: 0.4em;}
+    .progress-next { color: #b58900; font-size: 0.98em; margin-top: 0.19em;}
+    #summaryBar { display: flex; gap: 2.3em; justify-content: flex-start; margin-bottom:1em;}
+    #summaryBar > div { color: #26733e; font-size: 1em; }
+    #summaryBar span { font-weight: bold; font-size: 1.1em; color: #173472; display:block; margin-top:0.13em;}
+    #searchBox { width: 100%; padding: 0.73em 1em; margin-bottom: 1.1em; border-radius: 8px; border: 1.3px solid #cfd8dc; background: #fafdff; font-size: 1em;}
+    table { width: 100%; border-collapse: collapse; margin-bottom:1em;}
+    th, td { padding: 0.52em 0.3em; border-bottom: 1px solid #e0e7ef; font-size: 0.99em;}
+    th { color: #219150; background: #f0f8f4; font-weight: 600;}
+    td.status-registered { color: #16a34a; font-weight: 500;}
+    td.status-available { color: #2980b9;}
+    td.status-transferred { color: #b58900; }
+    code { background: #f5f7fa; border-radius: 5px; padding: 0.1em 0.25em; font-size: 0.98em;}
+    .copy-btn { background: #b8cafe; color: #173472; border: none; border-radius: 6px; font-size: 0.93em; padding: 0.22em 0.8em; cursor: pointer; margin-left: 0.5em;}
+    .copy-btn.copied { background: #16a34a; color: #fff; }
+    .btn-export, .btn-action { font-size: 1.1em; border-radius: 8px; border: none; font-weight: bold; min-height: 38px; padding: 0.75em 0.9em; cursor: pointer;}
+    .btn-export { background: #ffd600; color: #222;}
+    .btn-export:active { background: #ffb300;}
+    .btn-action { background: #b8cafe; color: #173472;}
+    .btn-action:active { background: #97b6ed;}
+    .nav-bar { display: flex; gap: 0.7em; margin-top: 2.1em;}
+    .btn-nav { flex: 1; background: #ede7f6; color: #512da8; border: none; border-radius: 8px; font-size:1em; font-weight:600; min-height: 38px; padding:0.8em 0;}
+    .btn-nav:active { background: #b39ddb;}
+    @media (max-width: 700px) { .container { max-width: 99vw; padding: 1.1em 0.2em 1.3em 0.2em;}}
+    @media (max-width: 530px) {
+      .batch-status-bar { flex-direction: column; gap: 0.2em;}
+      #summaryBar { gap: 1em;}
+      th, td { font-size: 0.92em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Check QR Status / Audit Chain</h2>
+    <div id="nowTimestamp"></div>
+    <div id="batchProgress"></div>
+    <div id="summaryBar"></div>
+    <input id="searchBox" type="text" placeholder="Search QR hash, owner, status..." oninput="renderTable()"/>
+    <table>
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Batch</th>
+          <th>QR Hash</th>
+          <th>Status</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody id="qrTable"></tbody>
+    </table>
+    <div style="margin-top:1.2em;display:flex;gap:0.8em;">
+      <button onclick="exportQR('csv')" class="btn-export">Export CSV</button>
+      <button onclick="exportQR('json')" class="btn-action">Export JSON</button>
+    </div>
+    <div class="nav-bar">
+      <button class="btn-nav" onclick="location.href='index.html'">Back</button>
+      <button class="btn-nav" onclick="location.href='index.html'">Home</button>
+    </div>
+  </div>
+<script>
+/* ตัวอย่าง logs array (ควร fetch logs.json จริงใน production) */
+const logs = [
+  {
+    "slot": 1,
+    "hash": "...",
+    "prev_hash": "...",
+    "qr_hash": "A9F1...1CDE",
+    "timestamp": "2024-06-02T12:00:00Z",
+    "pubkey": "0x0fA...123",
+    "status": "registered",
+    "action": "register",
+    "meta": {}
+  },
+  {
+    "slot": 2,
+    "hash": "...",
+    "prev_hash": "...",
+    "qr_hash": "B8A2...3BAF",
+    "timestamp": "2024-06-02T12:01:00Z",
+    "pubkey": "",
+    "status": "available",
+    "action": "mint",
+    "meta": {}
+  }
+  // ... เพิ่มตามจริง
+];
+
+// ตัวอย่าง batchConfig (ควรปรับตามระบบจริง)
+const batchConfig = [
+  {batch:1, label:"Batch 1 (Limited)", size:100, unlockPercent:0.5, nextBatch:2, nextAmount:2000},
+  {batch:2, label:"Batch 2", size:2000, unlockPercent:0.5, nextBatch:3, nextAmount:2000},
+  {batch:3, label:"Batch 3", size:2000, unlockPercent:0.5, nextBatch:null, nextAmount:null},
+];
+
+// --- แปลง logs เป็น qrList ที่ใช้ในตาราง ---
+function buildQRList(logs) {
+  const qrMap = {};
+  logs.forEach(entry => {
+    const hash = entry.qr_hash;
+    if (!qrMap[hash]) {
+      qrMap[hash] = {
+        hash: hash,
+        batch: findBatch(hash),
+        status: entry.status || "available",
+        owner: entry.pubkey || "",
+        index: entry.slot
+      };
+    } else {
+      if (entry.status) qrMap[hash].status = entry.status;
+      if (entry.pubkey) qrMap[hash].owner = entry.pubkey;
+    }
+  });
+  return Object.values(qrMap);
+}
+
+// วิธีหา batch (demo: prefix)
+function findBatch(hash) {
+  if (hash.startsWith("A")) return 1;
+  if (hash.startsWith("B")) return 2;
+  if (hash.startsWith("C")) return 3;
+  return 1;
+}
+
+let qrList = buildQRList(logs);
+
+function renderBatchProgress() {
+  const section = document.getElementById('batchProgress');
+  let html = "";
+  batchConfig.forEach(cfg => {
+    const batchQrs = qrList.filter(q=>q.batch===cfg.batch);
+    const reg = batchQrs.filter(q=>q.status==="registered").length;
+    const avail = batchQrs.filter(q=>q.status==="available").length;
+    const trans = batchQrs.filter(q=>q.status==="transferred").length;
+    const percent = ((reg/cfg.size)*100).toFixed(1);
+    html += `<div class="progress-block">
+      <span class="progress-title">${cfg.label}:</span>
+      <div class="batch-status-bar">
+        <div>Registered: <b>${reg.toLocaleString()}</b></div>
+        <div>Available: <b>${avail.toLocaleString()}</b></div>
+        <div>Transferred: <b>${trans.toLocaleString()}</b></div>
+        <div>Total: <b>${cfg.size.toLocaleString()}</b></div>
+      </div>
+      <div class="progress-stats"><b>${percent}%</b> Registered</div>
+      ${
+        cfg.nextBatch && reg<Math.ceil(cfg.size*cfg.unlockPercent)
+          ? `<div class="progress-next">Next unlock: <b>${cfg.nextAmount.toLocaleString()} QR</b> when registered ≥ <b>${Math.ceil(cfg.size*cfg.unlockPercent).toLocaleString()}</b> (${(cfg.unlockPercent*100).toFixed(0)}%)</div>`
+          : (cfg.nextBatch?`<div class="progress-next" style="color:#16a34a">Unlocked. Next: Batch ${cfg.nextBatch} (${cfg.nextAmount.toLocaleString()} QR)</div>`:"")
+      }
+    </div>`;
+  });
+  section.innerHTML = html;
+}
+
+function renderSummaryBar(filteredList) {
+  let total = filteredList.length;
+  let reg = filteredList.filter(q=>q.status==="registered").length;
+  let avail = filteredList.filter(q=>q.status==="available").length;
+  let trans = filteredList.filter(q=>q.status==="transferred").length;
+  document.getElementById('summaryBar').innerHTML = `
+    <div>Total<br><span>${total.toLocaleString()}</span></div>
+    <div>Registered<br><span>${reg.toLocaleString()}</span></div>
+    <div>Available<br><span>${avail.toLocaleString()}</span></div>
+    <div>Transferred<br><span>${trans.toLocaleString()}</span></div>
+  `;
+}
+
+function renderTable() {
+  const qrTable = document.getElementById('qrTable');
+  const search = (document.getElementById('searchBox')?.value || "").toLowerCase();
+  let filtered = qrList.filter(q =>
+      q.hash.toLowerCase().includes(search) ||
+      (q.owner && q.owner.toLowerCase().includes(search)) ||
+      q.status.toLowerCase().includes(search)
+    );
+  renderSummaryBar(filtered);
+  let html = filtered.map(q => {
+    return `<tr>
+      <td>${q.index}</td>
+      <td>${q.batch}</td>
+      <td>
+        <code>${q.hash}</code>
+        <button class="copy-btn" title="Copy QR Hash" onclick="copyToClipboard(this,'${q.hash}')">Copy</button>
+      </td>
+      <td class="status-${q.status}">${q.status.charAt(0).toUpperCase()+q.status.slice(1)}</td>
+      <td>
+        ${q.owner ? `<code>${q.owner}</code> <button class="copy-btn" title="Copy Owner" onclick="copyToClipboard(this,'${q.owner}')">Copy</button>` : '-'}
+      </td>
+    </tr>`;
+  }).join('');
+  qrTable.innerHTML = html || `<tr><td colspan="5" style="text-align:center;color:#888;">No data found.</td></tr>`;
+}
+
+function copyToClipboard(btn, text) {
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.classList.add('copied');
+    setTimeout(()=>btn.classList.remove('copied'), 1200);
+  });
+}
+
+function exportQR(type="csv") {
+  let csv = "No.,Batch,QR Hash,Status,Owner\n";
+  qrList.forEach(q=>{
+    csv += `${q.index},${q.batch},"${q.hash}",${q.status},${q.owner||""}\n`;
+  });
+  if(type==="csv") {
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `dtc_qr_export_${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    const blob = new Blob([JSON.stringify(qrList, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `dtc_qr_export_${Date.now()}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+function renderTimestamp() {
+  document.getElementById('nowTimestamp').textContent = `UTC: ${new Date().toISOString()}`;
+  setTimeout(renderTimestamp, 1000);
+}
+
+function loadData() {
+  renderBatchProgress();
+  renderTable();
+  renderTimestamp();
+}
+loadData();
+</script>
+</body>
+</html>
