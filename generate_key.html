@@ -112,18 +112,21 @@
       text-decoration: none;
       transition: background 0.13s, color 0.13s;
       display: flex; /* ใช้ flexbox */
-      flex-direction: row; /* จัดวางข้อความแนวนอน */
+      flex-direction: column; /* จัดวางไอคอนและข้อความ (ถ้ามี) แนวตั้ง */
       align-items: center;
       justify-content: center;
       gap: 0.5em; /* เพิ่มระยะห่างระหว่างข้อความ (ถ้ามี) */
     }
     .nav-bar a svg { /* Style for SVG icons within nav links */
-        display: none; /* ซ่อน SVG icons */
+        width: 24px; /* ขนาดไอคอน */
+        height: 24px;
+        fill: currentColor; /* ใช้สี text ของลิงก์ */
+        /* margin-bottom: 2px; */ /* ไม่ต้องมี margin ถ้าไม่มีข้อความ */
     }
     .nav-bar a span { /* Style for text label now visible */
-        font-size: 0.96em; /* ขนาดข้อความ */
-        font-weight: 600; /* น้ำหนักข้อความ */
-        display: block; /* ทำให้ข้อความแสดงผล */
+        /* font-size: 0.8em; */
+        /* font-weight: normal; */
+        display: none; /* ทำให้ข้อความไม่แสดงผล */
     }
     .nav-bar a:hover {
       background: #e8eaf6; /* สีอ่อนลงเมื่อ hover */
