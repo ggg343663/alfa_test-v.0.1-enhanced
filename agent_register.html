@@ -1,0 +1,263 @@
+<!--
+DTC Minimal UI/UX Logic
+
+- ทุก input/ปุ่ม/ผลลัพธ์ จัดวางเป็นกลุ่มและแยกโทนสีตาม logic ใช้งาน
+- กลุ่ม Ticket/Slot/Meta: สีเทาอ่อน #f6f7fa
+- กลุ่ม Password, PIN, Secret: สีเหลืองอ่อน #fffde7
+- กลุ่มปุ่ม Action (Generate/Export/Regen): ฟ้า, เหลือง, ฟ้าอ่อน ตามลำดับ
+- Navigation Bar: ปุ่มม่วงจาง/เทาอ่อน (Back/Home/Next) ขนาดเท่ากันทั้ง site
+
+[Section A] Key & Batch Info  
+    - Password, PIN, Secret, Batch Name, จำนวน QR (ปุ่ม +/– หรือ custom)
+    - label/hint สีเทาอ่อน #90a4ae, ขนาดเล็กใต้ input
+
+[Section B] Action  
+    - ปุ่มฟ้าใหญ่ "Generate QR Batch"
+
+[Section C] ผลลัพธ์/Preview  
+    - QR Preview Box (PNG/SVG), hash1, Commitment Box (hash2 สีฟ้าหรือเทาอ่อน)
+    - ปุ่มเหลือง Export Ticket / ฟ้า Export QR / ฟ้าอ่อน Export Log
+
+[Section D] Regen QR  
+    - ช่อง Ticket (สีเทาอ่อน), ปุ่ม Upload/QR
+    - ช่อง Slot ID, Prev Hash, Timestamp, Nonce (เทาอ่อน)
+    - Password, PIN, Secret (เหลืองอ่อน)
+    - ปุ่ม Regen (ฟ้า)
+
+[Section E] Audit Chain  
+    - Input QR/Commitment Hash (hash2) + ปุ่ม Audit (ฟ้าเล็ก)
+    - กล่อง audit chain (เจ้าของ/ลำดับ chain), expand/collapse ได้
+
+[Section F] Navigation Bar  
+    - Back | Home | Next (ปุ่มขนาดเท่ากัน)
+
+Style  
+    - input/box สูง 36–44px, margin/padding 12–20px
+    - label/hint #90a4ae, ขนาดเล็ก
+    - ผลลัพธ์/preview/log ไม่กินพื้นที่หลัก
+    - ปุ่ม Action เด่น, ฟอร์มอ่านง่าย กรอกง่าย
+    - รองรับ mobile (responsive)
+    - สีหลัก #2196f3 (ฟ้า), #90a4ae (เทาอ่อน), #ffd600 (เหลือง), #ede7f6 (ม่วงจาง)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register Agent (DTC v.0.7.5.1)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial,sans-serif; background: #f5f7fa; margin:0; padding:0;}
+    .container { max-width: 470px; margin:2em auto; background:#fff; padding:2.3em 1.1em 2em 1.1em; border-radius:15px; box-shadow:0 2px 16px #90caf933;}
+    h2 { color:#219150; text-align:center; margin-bottom:1.3em; }
+    .section { margin-bottom: 1.2em; }
+    .input-label { font-weight: bold; color: #26733e; margin-bottom: 0.19em; }
+    .input-hint { color: #90a4ae; font-size: 0.95em; margin-top: 0.05em; margin-bottom: 0.14em; }
+    input, textarea {
+      width: 100%; min-height: 38px; max-height: 44px;
+      font-size: 1.07em; border-radius: 8px; border: 1.4px solid #b0bec5;
+      padding: 0.7em 1em; background: #f6faf7; transition: border .2s, background .2s;
+      box-sizing: border-box;
+      margin-bottom: 0.58em;
+    }
+    input:focus, textarea:focus { border-color: #2196f3; background: #fff; }
+    textarea { min-height:3.2em; max-height: 6em; resize:vertical;}
+    .btn-main, .btn-action, .btn-export, .btn-nav {
+      width:100%; font-size:1.11em; border-radius:8px; border:none; font-weight:bold; min-height:44px;
+      margin-top: 0.6em; padding: 0.8em 0; cursor: pointer; transition: background .18s, color .18s;
+    }
+    .btn-main { background: #2196f3; color: #fff; }
+    .btn-main:active { background: #176d38;}
+    .btn-action { background: #b8cafe; color: #173472;}
+    .btn-action:active { background: #97b6ed;}
+    .btn-export { background: #ffd600; color: #222;}
+    .btn-export:active { background: #ffb300;}
+    .hash-row, .output-box {
+      background: #fafdff; border-radius: 8px; border: 1.2px solid #cfd8dc;
+      padding: 0.7em 0.9em; margin-bottom: 0.9em; font-size: 1em; min-height: 38px;
+      word-break: break-all; overflow-x: auto;
+    }
+    .warn { color: #b91c1c; background: #fbe7e7; padding:0.6em 0.8em; border-radius:8px; margin-bottom:0.7em; font-size:0.97em;}
+    .success { color:#16a34a; margin-top:0.28em;}
+    .step-label { margin:0.97em 0 0.24em 0; font-weight:bold; color:#219150; font-size:1.02em; }
+    .step-label.disabled { opacity:0.38; font-weight:500;}
+    .copy-btn { background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600; font-size:1em; }
+    .copy-success { color:#22c55e; font-size:0.97em; margin-left:0.33em;}
+    .nav-bar { display: flex; gap: 0.7em; margin-top: 2.1em;}
+    .btn-nav { flex: 1; background: #ede7f6; color: #512da8;}
+    .btn-nav:active { background: #b39ddb;}
+    @media (max-width:600px) {
+      .container { padding:1.1em 0.22em 1em 0.22em;}
+      .nav-bar { flex-direction: column; gap:0.4em;}
+      h2 { font-size:1.13em;}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Register Agent<br>(Dual Sign, DTC v.0.7.5.1)</h2>
+  <!-- Section A: Agent Info -->
+  <div class="section">
+    <div class="step-label">Step 1: Master creates Agent slot</div>
+    <div class="input-label">Agent Name (a-z, 0-9, ≤16)</div>
+    <input type="text" id="agentName" maxlength="16" autocomplete="off" />
+    <div id="badwordWarn" class="warn" style="display:none;"></div>
+    <div class="input-hint">No inappropriate word. Lowercase & numbers only.</div>
+    <div class="input-label">Agent Public Key</div>
+    <input type="text" id="agentPubKey" maxlength="64" autocomplete="off" />
+    <div class="input-label">Nonce (random)</div>
+    <div style="display:flex; gap:7px;">
+      <input type="text" id="nonce" maxlength="20" autocomplete="off" style="flex:1;" />
+      <button type="button" onclick="randomNonce()" class="btn-action" style="flex:0.7;">Random</button>
+    </div>
+    <button class="btn-main" onclick="createAgentSlot()">Create Agent Slot</button>
+  </div>
+  <!-- Section B: Agent Signs -->
+  <div class="section" id="section-sign" style="display:none;">
+    <div class="step-label">Step 2: Agent confirms and signs</div>
+    <div class="input-hint">Copy payload & sign with Agent password+PIN</div>
+    <textarea id="agentPayload" readonly class="output-box"></textarea>
+    <button class="copy-btn" onclick="copyAgentPayload()">Copy Payload</button>
+    <span id="copyAgentPayloadSuccess" class="copy-success"></span>
+    <div class="input-label" style="margin-top:0.6em;">Agent Password</div>
+    <input type="password" id="agentPw" maxlength="12" autocomplete="new-password" />
+    <div class="input-label">Agent PIN</div>
+    <input type="password" id="agentPin" maxlength="6" autocomplete="new-password" />
+    <button class="btn-main" type="button" onclick="signAgent()">Agent Sign</button>
+    <div class="output-box" id="sigResult" style="display:none;"></div>
+    <button class="btn-export" type="button" onclick="exportLog()">Export Log (JSON)</button>
+    <span id="exportSuccess" class="success"></span>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-nav" onclick="location.href='index.html'">Back</button>
+    <button class="btn-nav" onclick="location.href='index.html'">Home</button>
+    <button class="btn-nav" onclick="location.href='register.html'">Next</button>
+  </div>
+</div>
+<script>
+  // --- Timestamp & Nonce
+  let lastTimestamp = "";
+  function randomNonce() {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let s = "";
+    for (let i=0;i<16;i++) s += chars[Math.floor(Math.random()*chars.length)];
+    document.getElementById('nonce').value = s;
+  }
+  randomNonce();
+
+  // --- Badwords warn
+  let badwords = {};
+  let flatBadwords = [];
+  let badwordsReady = false, badwordsError = false;
+  fetch('badwords.json').then(r=>r.json()).then(list=>{
+      badwords=list;
+      flatBadwords = Object.values(list).flat().map(x=>x.toLowerCase());
+      badwordsReady = true;
+    }).catch(()=>{
+      badwordsReady = false; badwordsError = true;
+      document.getElementById('badwordWarn').style.display = "";
+      document.getElementById('badwordWarn').textContent = "Could not load badwords list. Please check badwords.json or contact admin.";
+    });
+  function findBadwords(str) {
+    if (!badwordsReady || !str) return [];
+    const s = str.toLowerCase();
+    return flatBadwords.filter(w => w && s.includes(w));
+  }
+  document.getElementById('agentName').addEventListener('input', function(){
+    const warn = document.getElementById('badwordWarn');
+    const v = this.value.trim().toLowerCase();
+    const found = findBadwords(v);
+    if (badwordsError) {
+      warn.style.display = "";
+      warn.textContent = "Could not load badwords list. Please check badwords.json or contact admin.";
+    } else if (found.length) {
+      warn.style.display = "";
+      warn.textContent = "Warning: This name contains inappropriate words (" + found.slice(0,3).join(', ') + (found.length>3?',...':'') + "). Please reconsider.";
+    } else {
+      warn.style.display = "none";
+    }
+  });
+
+  // --- Step 1: Master Create
+  function createAgentSlot() {
+    const name = document.getElementById('agentName').value.trim();
+    if (badwordsReady && findBadwords(name).length) {
+      if (!confirm("Warning: The agent name contains inappropriate words. Are you sure you want to continue?")) return;
+    }
+    if (badwordsError) {
+      alert("Cannot verify inappropriate words. Please check badwords.json or contact admin."); return;
+    }
+    const pubkey = document.getElementById('agentPubKey').value.trim();
+    const nonce = document.getElementById('nonce').value.trim();
+    if (!name || !/^[a-z0-9]{1,16}$/.test(name)) { alert("Invalid agent name"); return; }
+    if (!pubkey || pubkey.length<30) { alert("Invalid agent public key"); return; }
+    if (!nonce) { alert("Enter nonce"); return; }
+    lastTimestamp = new Date().toISOString();
+    const master_hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"; // demo only, replace by real hash
+    const agent_hash_str = `${master_hash}:${pubkey}:${name}:${nonce}:${lastTimestamp}`;
+    window.agent_hash_data = { master_hash, agent_pubkey:pubkey, agent_name:name, nonce, timestamp:lastTimestamp };
+    window.agent_hash_to_sign = agent_hash_str;
+    document.getElementById('section-sign').style.display = "block";
+    document.getElementById('agentPayload').value = agent_hash_str;
+    document.getElementById('sigResult').style.display = "none";
+    document.getElementById('exportSuccess').textContent = "";
+  }
+
+  // --- PBKDF2 derive (browser)
+  async function pbkdf2_sha256(password, pin) {
+    const enc = new TextEncoder();
+    const key = await window.crypto.subtle.importKey("raw", enc.encode(password+"|"+pin), "PBKDF2", false, ["deriveBits"]);
+    const bits = await window.crypto.subtle.deriveBits(
+      {name:"PBKDF2",salt:enc.encode("DTC-KEY-SALT"),iterations:100000,hash:"SHA-256"}, key, 256);
+    return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+  async function hmac_sha256(keyHex, msg) {
+    const enc = new TextEncoder();
+    const key = await window.crypto.subtle.importKey("raw", hex2buf(keyHex), {name:"HMAC",hash:"SHA-256"}, false, ["sign"]);
+    const sig = await window.crypto.subtle.sign("HMAC", key, enc.encode(msg));
+    return Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  function hex2buf(hex){return new Uint8Array(hex.match(/../g).map(x=>parseInt(x,16)));}
+
+  // --- Step 2: Agent Sign
+  async function signAgent() {
+    const pw = document.getElementById('agentPw').value.trim();
+    const pin = document.getElementById('agentPin').value.trim();
+    if (!pw || !pin) { alert("Please enter agent password & pin"); return; }
+    const priv = await pbkdf2_sha256(pw, pin);
+    const sig = await hmac_sha256(priv, window.agent_hash_to_sign);
+    window.agent_hash = sig;
+    const res = {
+      ...window.agent_hash_data,
+      sig_agent: sig
+    };
+    const div = document.getElementById('sigResult');
+    div.style.display = "block";
+    div.innerHTML = "<b>Agent Registration Complete</b><br><pre>"+JSON.stringify(res,null,2)+"</pre>";
+    window.lastExportObj = res;
+  }
+
+  // --- Copy util
+  function copyAgentPayload() {
+    const el = document.getElementById('agentPayload');
+    el.select(); el.setSelectionRange(0, 9999);
+    navigator.clipboard.writeText(el.value);
+    document.getElementById('copyAgentPayloadSuccess').textContent = "Copied!";
+    setTimeout(()=>{document.getElementById('copyAgentPayloadSuccess').textContent="";},1200);
+  }
+
+  // --- Export Log (JSON)
+  function exportLog() {
+    const obj = window.lastExportObj || window.agent_hash_data || {};
+    if (!obj) { alert("Nothing to export yet."); return; }
+    obj.exported_at = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type: "application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "dtc_agent_registration_log.json";
+    a.click();
+    document.getElementById('exportSuccess').textContent = "Exported!";
+    setTimeout(()=>{document.getElementById('exportSuccess').textContent="";}, 1500);
+  }
+</script>
+</body>
+</html>
