@@ -1,617 +1,447 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Regenerate QR Hash - DTC: Magic Chain System</title>
-    <style>
-        /* Base Styles (Copied from previous files for consistency) */
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 700px;
-            margin: 2em auto;
-            padding: 1em;
-            background: #f5f7fa;
-            color: #333;
-        }
-        h1 {
-            text-align: center;
-            color: #219150; /* Dark green for the main title */
-            margin-bottom: 1.2em;
-            letter-spacing: 0.02em;
-        }
-        h1 small {
-            display: block;
-            font-size: 0.5em;
-            color: #555;
-            margin-top: 0.5em;
-        }
-        .intro-section {
-            background-color: #e0f2f7;
-            border-left: 5px solid #00acc1;
-            padding: 1.2em;
-            margin-bottom: 2em;
-            border-radius: 8px;
-            box-shadow: 0 2px 7px rgba(0,0,0,0.05);
-            color: #444;
-            line-height: 1.5;
-            text-align: center;
-            font-size: 0.95em;
-        }
-        .intro-section p {
-            margin: 0.5em 0;
-        }
-        
-        /* Section Block Styling */
-        .section-block {
-            margin: 1.1em 0;
-            padding: 1.5em;
-            border-radius: 12px;
-            box-shadow: 0 2px 9px #edf1f6;
-        }
-        .block-title {
-            font-size: 1.07em;
-            font-weight: bold;
-            margin-bottom: 0.9em;
-            padding-bottom: 0.5em;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            color: #555;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Regenerate QR Hash - DTC: Magic Chain System</title>
+  <script src="https://unpkg.com/html5-qrcode"></script> <style>
+    body { font-family: Arial,sans-serif; background: #f5f7fa; margin:0; padding:0;}
+    h1 { text-align: center; color: #219150; margin-bottom: 1.2em; }
+    .container { max-width: 680px; margin:2em auto; background:#fff; padding:2.3em 1.1em 2em 1.1em; border-radius:15px; box-shadow:0 2px 16px #90caf933;}
+    .section-block { margin: 1.1em 0; padding: 1.3em; border-radius: 12px; box-shadow: 0 2px 9px #edf1f6;}
+    .block-title { font-size: 1.07em; font-weight: bold; margin-bottom: 0.9em; color: #555; }
+    .input-label { font-weight: bold; color: #26733e; margin-bottom: 0.19em; }
+    .input-hint { color: #90a4ae; font-size: 0.95em; margin-top: 0.05em; margin-bottom: 0.14em; }
+    .input-row { display: flex; align-items: center; gap: 0.4em; }
+    input, textarea {
+      width: 100%; min-height: 38px; max-height: 44px; font-size: 1.07em; border-radius: 8px; border: 1.4px solid #b0bec5;
+      padding: 0.7em 1em; background: #f6faf7; transition: border .2s, background .2s; box-sizing: border-box; margin-bottom: 0.58em;
+    }
+    input:focus, textarea:focus { border-color: #2196f3; background: #fff; }
+    textarea { min-height:3.2em; max-height: 6em; resize:vertical;}
+    .input-yellow { background: #fffde7; }
+    .input-gray { background: #f6f7fa; }
+    .btn-main {
+      width:100%; font-size:1.11em; border-radius:8px; border:none; font-weight:bold; min-height:44px;
+      margin-top: 0.6em; padding: 0.8em 0; cursor: pointer;
+      background: linear-gradient(90deg,#219150 75%,#44cc77 100%);
+      color: #fff; box-shadow: 0 2px 8px #21915022; transition: background .18s, color .18s;
+    }
+    .btn-main:active { background: #176d38;}
+    .btn-confirm {
+      width: 100%; margin-top: 15px; background: linear-gradient(90deg,#219150 70%,#2196f3 100%);
+      color: #fff; font-weight: bold; font-size: 1.11em; border: none; border-radius: 8px; padding: 1em 0; cursor: pointer;
+    }
+    .btn-confirm:active { background:#176d38; }
+    .btn-cancel {
+      width:100%; background:#f6f7fa; color:#2196f3; border:1.5px solid #2196f3; border-radius:8px; font-weight:bold; font-size:1em; padding:0.9em 0; margin-top:0.7em; cursor:pointer;
+    }
+    .btn-export { background: #ffd600; color: #222; border:none; border-radius:8px; padding:0.8em 0; font-weight:bold; width:100%; margin-top:0.7em;}
+    .btn-export:active { background: #ffb300;}
 
-        /* Specific Section Styles for Regen */
-        .regen-ticket-input-block {
-            background: #f6f7fa; /* Light grey for Ticket/Meta input */
-            border-left: 6px solid #90a4ae; /* Matching grey border */
-        }
-        .regen-key-input-block {
-            background: #fffde7; /* Light yellow for Password, PIN, Secret */
-            border-left: 6px solid #ffd600; /* Matching yellow border */
-        }
-        .regen-output-block {
-            background: #eafaf0; /* Light green for output (QR Preview, Hashes) */
-            border-left: 6px solid #219150; /* Matching green border */
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .regen-output-content {
-            display: flex;
-            flex-direction: row;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .qr-preview-box {
-            flex: 1;
-            min-width: 150px;
-            background-color: #ffffff;
-            border: 1px dashed #ccc;
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-        }
-        .qr-preview-box img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #eee;
-        }
-        .qr-hashes-box {
-            flex: 1;
-            min-width: 250px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .hash-display {
-            background-color: #e3f2fd; /* Light blue for hash boxes */
-            border: 1px solid #2196f3; /* Blue border */
-            border-radius: 8px;
-            padding: 10px;
-            word-wrap: break-word;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9em;
-            color: #333;
-        }
-        .hash-display label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #222;
-            font-size: 0.9em;
-        }
-        .hash-value {
-            user-select: all;
-            overflow-x: auto;
-        }
+    /* New style for Scan/Import buttons */
+    .btn-scan-import {
+        background: #2563eb; /* Blue color */
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7em 1em;
+        font-weight: bold;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+        box-sizing: border-box;
+        margin-bottom: 0.58em; /* Match other inputs */
+    }
+    .btn-scan-import:active { background: #1d4ed8; } /* Darker blue on active */
 
-        /* Input Group Styling */
-        .input-group {
-            margin-bottom: 15px;
-            position: relative;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #666;
-            font-size: 0.95em;
-        }
-        .input-group input[type="password"],
-        .input-group input[type="text"],
-        .input-group textarea {
-            width: calc(100% - 24px);
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            background-color: #ffffff;
-            box-sizing: border-box;
-        }
-        .label-hint {
-            display: block;
-            font-size: 0.8em;
-            color: #90a4ae;
-            margin-top: 5px;
-        }
+    .hash-row, .output-box {
+      background: #fafdff; border-radius: 8px; border: 1.2px solid #cfd8dc;
+      padding: 0.7em 0.9em; margin-bottom: 0.9em; font-size: 1em; min-height: 38px;
+      word-break: break-all; overflow-x: auto;
+    }
+    .success { color:#16a34a; margin-top:0.28em;}
+    .footer-note { text-align: center; margin-top: 2.4em; color: #b0bec5; font-size: 0.95em;}
+    .qr-output-content { display: flex; flex-direction: row; gap: 18px; flex-wrap: wrap;}
+    .qr-preview-box { flex:1; min-width:160px; background:#fff; border:1px dashed #ccc; border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center;}
+    .qr-preview-box img { max-width:100%; height:auto; border:1px solid #eee;}
+    .qr-hashes-box { flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px;}
+    .hash-display { background-color: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 10px; word-wrap: break-word; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; color: #333;}
+    .hash-display label { display: block; margin-bottom: 5px; font-weight: bold; color: #222; font-size: 0.9em;}
+    .hash-value { user-select: all; overflow-x: auto; }
+    .export-buttons { display: flex; gap: 8px; flex-wrap:wrap; margin-top: 1.3em;}
+    /* Preview Modal */
+    #previewModal { display: none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(40,80,50,0.13); z-index:99; align-items:center; justify-content:center; }
+    .preview-box { background: #f6fafd; border-radius: 15px; box-shadow: 0 8px 32px #21915044; max-width: 410px; margin: 0 auto; padding: 1.7em 1.2em; border: 1.5px solid #219150; color: #246bfd; font-size: 1.06em; }
+    .preview-title { color: #219150; font-weight:bold; font-size:1.08em; margin-bottom:0.5em;}
+    .preview-details { word-break:break-all; font-size:0.98em; background:#eafaf0; border-radius:7px; padding:1em 1em; margin:0.8em 0; color:#26733e;}
+    .modal-action { margin-top:0.7em; }
 
-        /* Toggle Password/PIN Visibility */
-        .toggle-password {
-            position: absolute;
-            right: 12px;
-            top: 62%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #90a4ae;
-            font-size: 0.9em;
-        }
+    #qr-reader-container { /* New container for the QR reader */
+        width: 100%;
+        max-width: 300px; /* Adjust as needed */
+        margin: 1em auto;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        display: none; /* Hidden by default */
+    }
 
-        /* Upload/Scan Button Group */
-        .upload-scan-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .upload-scan-btn {
-            flex: 1;
-            padding: 0.8em 1em;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: background 0.13s, filter 0.13s;
-            box-shadow: 0 2px 7px rgba(0,0,0,0.07);
-            font-size: 0.9em;
-            background: #90a4ae; /* Grey buttons */
-            color: #fff;
-        }
-        .upload-scan-btn:hover {
-            filter: brightness(0.93);
-        }
-        .upload-scan-btn input[type="file"] {
-            display: none; /* Hide actual file input */
-        }
-
-        /* Main Action Button (Regen) */
-        .btn-regen {
-            display: block;
-            width: 100%;
-            padding: 1em 1.2em;
-            margin-top: 25px;
-            color: #fff;
-            font-weight: bold;
-            border-radius: 8px;
-            font-size: 1.2em;
-            text-align: center;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: background 0.13s, filter 0.13s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            background: #2196f3; /* Blue */
-        }
-        .btn-regen:hover {
-            filter: brightness(0.9);
-        }
-
-        /* Export Buttons (same as Mint) */
-        .export-buttons {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .export-btn {
-            flex: 1;
-            min-width: 100px;
-            padding: 0.8em 1em;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: background 0.13s, filter 0.13s;
-            box-shadow: 0 2px 7px rgba(0,0,0,0.07);
-            font-size: 0.95em;
-        }
-        .export-ticket-btn { background: #ffd600; color: #222; } /* Yellow */
-        .export-qr-btn { background: #2196f3; color: #fff; } /* Blue */
-        .export-log-btn { background: #90a4ae; color: #fff; } /* Grey */
-        .export-btn:hover {
-            filter: brightness(0.93);
-        }
-
-        /* Timestamp Styling */
-        .timestamp-note {
-            text-align: right;
-            color: #607d8b;
-            font-size: 0.85em;
-            margin-top: 10px;
-        }
-        
-        /* Footer */
-        .footer-note {
-            text-align: center;
-            margin-top: 2.4em;
-            color: #b0bec5;
-            font-size: 0.95em;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
-            body { margin: 0.4em; padding: 0.07em;}
-            .section-block { padding: 0.7em 0.2em;}
-            .input-group input, .input-group textarea { width: calc(100% - 14px); padding: 7px; }
-            .toggle-password { right: 7px; top: 58%; }
-            .regen-output-content { flex-direction: column; }
-            .qr-hashes-box, .qr-preview-box { min-width: unset; width: 100%; }
-            .upload-scan-group { flex-direction: column; }
-            .upload-scan-btn { width: 100%; }
-        }
-    </style>
+    @media (max-width: 600px) {
+      .container { padding:1.1em 0.22em 1em 0.22em;}
+      .qr-output-content { flex-direction: column; gap: 8px;}
+      .qr-hashes-box, .qr-preview-box { min-width: unset; width: 100%; }
+      .preview-box { padding: 1.1em 0.5em; }
+      .input-row { flex-direction: column; align-items: stretch; }
+      .btn-scan-import, #uploadTicket { width: 100%; }
+      #uploadTicket { margin-bottom: 0.58em;} /* Align with other inputs */
+    }
+  </style>
 </head>
 <body>
-    <h1>DTC: Magic Chain System <br><small>Decentralized Trust Community</small></h1>
-
-    <div class="intro-section">
-        <p>Use this page to **Regenerate** (update/re-hash) an existing QR Code record, linking it to the previous state on the chain.</p>
-        <p>This creates a new **Audit Hash1** and **Commitment Hash (Hash2)** based on updated content and your new signature.</p>
+<div class="container">
+  <h1>DTC: Magic Chain System <br><small>Decentralized Trust Community</small></h1>
+  <div class="section-block" style="background:#f6f7fa; border-left:6px solid #90a4ae;">
+    <div class="block-title">Regenerate (Update) QR Hash</div>
+    <div class="input-label">Paste QR Ticket JSON Content</div>
+    <textarea id="qrTicketContent" rows="4" placeholder='Paste the original QR Ticket JSON'></textarea>
+    <div class="input-row">
+      <input type="file" id="uploadTicket" accept=".json,.txt" style="flex:1; margin-right: 0.4em;"/>
+      <button class="btn-scan-import" id="scanImportQrTicketBtn" type="button">Scan/Import Ticket</button>
     </div>
-
-    <div class="section-block regen-ticket-input-block">
-        <div class="block-title">Original QR Ticket & Chain Context</div>
-
-        <div class="input-group">
-            <label for="qrTicketContent">QR Ticket Content (JSON):</label>
-            <textarea id="qrTicketContent" rows="8" placeholder="Paste the full JSON content of the QR Code ticket you wish to regenerate here."></textarea>
-            <div class="upload-scan-group">
-                <label for="uploadTicket" class="upload-scan-btn">Upload Ticket (JSON)
-                    <input type="file" id="uploadTicket" accept=".json" />
-                </label>
-                <button class="upload-scan-btn" id="scanQrTicketBtn">Scan QR (Webcam)</button>
-            </div>
-            <span class="label-hint">This content will be used to extract previous chain data (e.g., prev_hash, slot ID).</span>
-        </div>
-
-        <div class="input-group">
-            <label for="prevHash">Previous Hash2 (from Ticket):</label>
-            <input type="text" id="prevHash" placeholder="Parsed from QR Ticket" readonly />
-            <span class="label-hint">The Hash2 of the previous record, crucial for chain linkage.</span>
-        </div>
-        <div class="input-group">
-            <label for="currentSlotId">Current Slot ID (from Ticket):</label>
-            <input type="text" id="currentSlotId" placeholder="Parsed from QR Ticket" readonly />
-            <span class="label-hint">The Slot ID associated with this QR record.</span>
-        </div>
-        <div class="input-group">
-            <label for="originalTimestamp">Original Timestamp (from Ticket):</label>
-            <input type="text" id="originalTimestamp" placeholder="Parsed from QR Ticket" readonly />
-            <span class="label-hint">The original creation timestamp of this record.</span>
-        </div>
+    <div class="input-row">
+      <input class="input-gray" id="prevHash" readonly placeholder="Prev Hash2" style="margin-right:8px;" />
+      <input class="input-gray" id="currentSlotId" readonly placeholder="Slot ID" style="margin-right:8px;" />
+      <input class="input-gray" id="originalTimestamp" readonly placeholder="Original Timestamp" />
     </div>
-
-    <div class="section-block regen-key-input-block">
-        <div class="block-title">New Data & Your Signature</div>
-
-        <div class="input-group">
-            <label for="newSecretData">New QR Content / Secret Data (Optional):</label>
-            <textarea id="newSecretData" rows="4" placeholder="Enter new content or 'secret' data for the regenerated QR. Leave empty to keep original data."></textarea>
-            <span class="label-hint">This will become the new `Data` field for the regenerated QR.</span>
-        </div>
-
-        <div class="input-group">
-            <label for="issuerPublicKey">Your Public Key (Current Owner):</label>
-            <textarea id="issuerPublicKey" rows="3" placeholder="Paste your Public Key (current owner of this QR)"></textarea>
-            <span class="label-hint">This key identifies you as the party regenerating this QR.</span>
-        </div>
-
-        <div class="input-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" placeholder="Enter your password (for signing)" />
-            <span class="toggle-password" data-target="password">Show</span>
-            <span class="label-hint">The password linked to your Public Key for signing the new transaction.</span>
-        </div>
-
-        <div class="input-group">
-            <label for="pin">PIN (4 digits):</label>
-            <input type="password" id="pin" maxlength="4" placeholder="Enter your 4-digit PIN (for signing)" />
-            <span class="toggle-password" data-target="pin">Show</span>
-            <span class="label-hint">The PIN linked to your Public Key for signing.</span>
-        </div>
-
-        <button class="btn-regen" id="regenerateQrBtn">Regenerate QR Hash</button>
+    <div class="input-label">New Secret Data (QR Content)</div>
+    <textarea class="input-yellow" id="newSecretData" rows="3" placeholder="(Optional) If blank, will keep old content"></textarea>
+    <div class="input-label">Issuer Public Key</div>
+    <input id="issuerPublicKey" type="text" maxlength="64" placeholder="Paste your Public Key" />
+    <div class="input-row">
+      <div style="flex:1;">
+        <div class="input-label">Password</div>
+        <input type="password" class="input-yellow" id="password" placeholder="Password" />
+      </div>
+      <div style="flex:1;">
+        <div class="input-label">PIN (4 digits)</div>
+        <input type="password" class="input-yellow" id="pin" maxlength="4" placeholder="PIN" />
+      </div>
     </div>
+    <button class="btn-main" id="previewBtn" type="button">Preview Regeneration</button>
+  </div>
 
-    <div class="section-block regen-output-block" id="regenOutputSection" style="display:none;">
-        <div class="block-title">Regenerated QR Preview & Hashes</div>
-        <div class="regen-output-content">
-            <div class="qr-preview-box">
-                <label>Regenerated QR Preview:</label>
-                <img id="regeneratedQrCodeImage" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Regenerated QR Code Preview" />
-                <span class="label-hint" id="regeneratedQrContentHint">Content: <span id="regeneratedQrContentDisplay"></span></span>
-            </div>
-            <div class="qr-hashes-box">
-                <div class="hash-display">
-                    <label for="newHash1">New Hash1 (Regenerated QR Content Hash):</label>
-                    <div class="hash-value" id="newHash1"></div>
-                    <span class="label-hint">Hash of your Public Key, New Secret Data, Batch Name, Prev Hash2, etc.</span>
-                </div>
-                <div class="hash-display">
-                    <label for="newHash2">New Hash2 (Regenerated Commitment Hash):</label>
-                    <div class="hash-value" id="newHash2"></div>
-                    <span class="label-hint">New Commitment Hash for this regenerated QR (used for chain linkage).</span>
-                </div>
-            </div>
-        </div>
-        <p class="timestamp-note">Regenerated at: <span id="regeneratedTimestamp"></span></p>
+  <div id="qr-reader-container">
+      <div id="qr-reader" style="width:100%;height:100%;"></div>
+  </div>
 
-        <div class="export-buttons">
-            <button class="export-btn export-ticket-btn" id="exportNewTicketBtn">Export New Ticket (JSON)</button>
-            <button class="export-btn export-qr-btn" id="exportNewQrBtn">Export New QR (PNG/SVG)</button>
-            <button class="export-btn export-log-btn" id="exportRegenLogBtn">Export Regen Log</button>
-        </div>
+  <div id="previewModal">
+    <div class="preview-box">
+      <div class="preview-title">Preview Regenerated QR (Confirm Before Commit)</div>
+      <div class="preview-details" id="previewDetails"></div>
+      <div class="modal-action">
+        <button class="btn-confirm" id="confirmBtn">Confirm &amp; Regenerate</button>
+        <button class="btn-cancel" id="cancelPreviewBtn">Cancel</button>
+      </div>
     </div>
+  </div>
 
-    <p class="footer-note">
-        Developed &amp; Deployed on GitHub Pages • 100% Mobile-Friendly System
-    </p>
+  <div class="section-block" id="regenOutputSection" style="display:none;background:#eafaf0;border-left:6px solid #219150;">
+    <div class="block-title">Regenerated QR Preview &amp; Hashes</div>
+    <div class="qr-output-content">
+      <div class="qr-preview-box">
+        <label>QR Preview:</label>
+        <img id="regeneratedQrCodeImage" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="QR Preview" />
+      </div>
+      <div class="qr-hashes-box">
+        <div class="hash-display">
+          <label>New Hash1 (QR Content Hash):</label>
+          <div class="hash-value" id="newHash1"></div>
+        </div>
+        <div class="hash-display">
+          <label>New Hash2 (Commitment Hash):</label>
+          <div class="hash-value" id="newHash2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hash-display" style="margin-top:1em;">
+      <label>Regenerated QR Content:</label>
+      <pre id="regeneratedQrContentDisplay" style="font-size:0.97em;color:#234;white-space:pre-wrap;"></pre>
+    </div>
+    <p style="text-align:right;color:#607d8b;font-size:0.87em;margin-top:10px;">Generated at: <span id="regeneratedTimestamp"></span></p>
+    <div class="export-buttons">
+      <button class="btn-export" id="exportNewTicketBtn" type="button">Export Ticket (JSON)</button>
+      <button class="btn-export" id="exportNewQrBtn" type="button">Export QR (PNG)</button>
+      <button class="btn-export" id="exportRegenLogBtn" type="button">Export Log (JSON)</button>
+    </div>
+  </div>
+  <p class="footer-note">
+      Developed &amp; Deployed on GitHub Pages • 100% Mobile-Friendly System
+  </p>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM refs
+    const qrTicketContentInput = document.getElementById('qrTicketContent');
+    const uploadTicketBtn = document.getElementById('uploadTicket');
+    const scanImportQrTicketBtn = document.getElementById('scanImportQrTicketBtn'); // New combined button
+    const prevHashDisplay = document.getElementById('prevHash');
+    const currentSlotIdDisplay = document.getElementById('currentSlotId');
+    const originalTimestampDisplay = document.getElementById('originalTimestamp');
+    const newSecretDataInput = document.getElementById('newSecretData');
+    const issuerPublicKeyInput = document.getElementById('issuerPublicKey');
+    const passwordInput = document.getElementById('password');
+    const pinInput = document.getElementById('pin');
+    const previewBtn = document.getElementById('previewBtn');
+    const previewModal = document.getElementById('previewModal');
+    const previewDetails = document.getElementById('previewDetails');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelPreviewBtn = document.getElementById('cancelPreviewBtn');
+    const regenOutputSection = document.getElementById('regenOutputSection');
+    const regeneratedQrCodeImage = document.getElementById('regeneratedQrCodeImage');
+    const regeneratedQrContentDisplay = document.getElementById('regeneratedQrContentDisplay');
+    const newHash1Display = document.getElementById('newHash1');
+    const newHash2Display = document.getElementById('newHash2');
+    const regeneratedTimestampDisplay = document.getElementById('regeneratedTimestamp');
+    const exportRegenLogBtn = document.getElementById('exportRegenLogBtn'); // Reference to the export log button
+    const qrReaderContainer = document.getElementById('qr-reader-container'); // New QR reader container
+    let qrReader = null; // Html5Qrcode instance
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const qrTicketContentInput = document.getElementById('qrTicketContent');
-            const uploadTicketBtn = document.getElementById('uploadTicket');
-            const scanQrTicketBtn = document.getElementById('scanQrTicketBtn'); // Mocked
-            
-            const prevHashDisplay = document.getElementById('prevHash');
-            const currentSlotIdDisplay = document.getElementById('currentSlotId');
-            const originalTimestampDisplay = document.getElementById('originalTimestamp');
+    let pendingRegen = null; // Store pending for confirm
 
-            const newSecretDataInput = document.getElementById('newSecretData');
-            const issuerPublicKeyInput = document.getElementById('issuerPublicKey');
-            const passwordInput = document.getElementById('password');
-            const pinInput = document.getElementById('pin');
-            const regenerateQrBtn = document.getElementById('regenerateQrBtn');
-            
-            const regenOutputSection = document.getElementById('regenOutputSection');
-            const regeneratedQrCodeImage = document.getElementById('regeneratedQrCodeImage');
-            const regeneratedQrContentDisplay = document.getElementById('regeneratedQrContentDisplay');
-            const newHash1Display = document.getElementById('newHash1');
-            const newHash2Display = document.getElementById('newHash2');
-            const regeneratedTimestampDisplay = document.getElementById('regeneratedTimestamp');
+    // Dummy Meta Information for Regen Log (updated for current context)
+    const regenLogMeta = {
+        appVersion: "1.0.0",
+        deviceName: "Web Browser",
+        os: "N/A", // In a real app, detect OS
+        location: "Thailand",
+        timestamp: new Date().toISOString()
+    };
 
-            // --- Toggle Password/PIN Visibility (reused) ---
-            document.querySelectorAll('.toggle-password').forEach(toggle => {
-                toggle.addEventListener('click', () => {
-                    const targetId = toggle.dataset.target;
-                    const targetInput = document.getElementById(targetId);
-                    if (targetInput.type === 'password') {
-                        targetInput.type = 'text';
-                        toggle.textContent = 'Hide';
-                    } else {
-                        targetInput.type = 'password';
-                        toggle.textContent = 'Show';
-                    }
-                });
-            });
-
-            // --- Mock QR Ticket Content Parsing ---
-            // In a real app, this would parse the JSON and validate its structure.
-            qrTicketContentInput.addEventListener('input', () => {
-                try {
-                    const ticketJson = JSON.parse(qrTicketContentInput.value);
-                    prevHashDisplay.value = ticketJson.hash2 || 'N/A'; // Use hash2 of previous as prev_hash for new
-                    currentSlotIdDisplay.value = ticketJson.meta?.slotId || 'N/A';
-                    originalTimestampDisplay.value = ticketJson.meta?.timestamp ? new Date(ticketJson.meta.timestamp).toLocaleString() : 'N/A';
-                    // Populate newSecretDataInput with original data if empty for user convenience
-                    if (!newSecretDataInput.value.trim() && ticketJson.data) {
-                        newSecretDataInput.value = ticketJson.data;
-                    }
-                } catch (e) {
-                    prevHashDisplay.value = '';
-                    currentSlotIdDisplay.value = '';
-                    originalTimestampDisplay.value = '';
-                    // Do not clear newSecretDataInput here if it was already filled by user
-                }
-            });
-
-            // --- Mock Upload Ticket (File Input) ---
-            uploadTicketBtn.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        qrTicketContentInput.value = e.target.result;
-                        qrTicketContentInput.dispatchEvent(new Event('input')); // Trigger input event to parse
-                    };
-                    reader.readAsText(file);
-                }
-            });
-
-            // --- Mock Scan QR Ticket (Webcam) ---
-            scanQrTicketBtn.addEventListener('click', () => {
-                alert('Webcam QR scan functionality is not implemented in this mockup. Please paste QR Ticket JSON content manually.');
-                // In a real app, integrate a QR scanning library (e.g., html5-qrcode)
-            });
-
-            // --- Mock QR Code Regeneration Function ---
-            // IMPORTANT: This is a simplified mockup. In a real system:
-            // 1. Cryptographic hashing (SHA256) would be used for Hash1 and Hash2.
-            // 2. Digital Signature would be applied using the Private Key derived from Password + PIN.
-            // 3. Chain integrity (prev_hash validation) would be strictly enforced.
-            function regenerateMockQrData(originalTicketJson, newSecretData, issuerPublicKey, password, pin) {
-                const now = new Date();
-                const timestamp = now.toISOString();
-                const newNonce = Math.random().toString(36).substring(2, 10); // New nonce for new transaction
-
-                // Extract relevant data from original ticket for new Hash1 calculation
-                const prevHash2 = originalTicketJson.hash2; // This becomes the prev_hash for the new record
-                const originalIssuerPublicKey = originalTicketJson.issuerPublicKey; // Original issuer
-                const originalBatchName = originalTicketJson.meta?.batchName || 'N/A';
-                const originalQuantity = originalTicketJson.meta?.quantity || 1;
-                const originalSlotId = originalTicketJson.meta?.slotId || 'N/A';
-
-                // Use newSecretData if provided, otherwise use original data
-                const finalData = newSecretData.trim() === '' ? originalTicketJson.data : newSecretData;
-
-                // Mock Hashing Logic for new Hash1
-                const mockContentForHash1 = `${issuerPublicKey}|${finalData}|${originalBatchName}|${originalQuantity}|${timestamp}|${originalSlotId}|${newNonce}|${prevHash2}`;
-                let hash1 = 0;
-                for (let i = 0; i < mockContentForHash1.length; i++) {
-                    const char = mockContentForHash1.charCodeAt(i);
-                    hash1 = ((hash1 << 5) - hash1) + char;
-                    hash1 |= 0;
-                }
-                const newHash1 = `0xREGEN_QR${Math.abs(hash1).toString(16).padStart(12, '0').toUpperCase()}`;
-
-                // Mock Hashing Logic for new Hash2 (Commitment Hash)
-                const mockContentForHash2 = `${newHash1}|${timestamp}|${newNonce}|${prevHash2}`;
-                let hash2 = 0;
-                for (let i = 0; i < mockContentForHash2.length; i++) {
-                    const char = mockContentForHash2.charCodeAt(i);
-                    hash2 = ((hash2 << 5) - hash2) + char;
-                    hash2 |= 0;
-                }
-                const newHash2 = `0xREGEN_COMMITMENT${Math.abs(hash2).toString(16).padStart(12, '0').toUpperCase()}`;
-
-                // New QR Content (JSON structure for the regenerated QR)
-                const regeneratedQrContentJson = {
-                    version: "DTC_0.7.5.3",
-                    type: "QR_Regenerate",
-                    issuerPublicKey: issuerPublicKey, // Current regenerator
-                    data: finalData,
-                    meta: {
-                        batchName: originalBatchName,
-                        quantity: originalQuantity,
-                        timestamp: timestamp, // New timestamp for this regen record
-                        slotId: originalSlotId,
-                        nonce: newNonce,
-                        prev_hash: prevHash2 // Crucial linkage to the previous record's Hash2
-                    },
-                    hash1: newHash1,
-                    hash2: newHash2,
-                    originalIssuerPublicKey: originalIssuerPublicKey, // Keep track of original issuer
-                    signature: "0xMOCK_REGEN_SIGNATURE_XYZABCDEF" // Placeholder for actual digital signature
-                };
-
-                return {
-                    qrContent: JSON.stringify(regeneratedQrContentJson, null, 2),
-                    hash1: newHash1,
-                    hash2: newHash2,
-                    timestamp: timestamp
-                };
+    // Parse Ticket JSON to fill prevHash, slotId, timestamp
+    qrTicketContentInput.addEventListener('input', () => {
+        try {
+            const ticketJson = JSON.parse(qrTicketContentInput.value);
+            prevHashDisplay.value = ticketJson.hash2 || 'N/A';
+            currentSlotIdDisplay.value = ticketJson.meta?.slotId || 'N/A';
+            originalTimestampDisplay.value = ticketJson.meta?.timestamp ? new Date(ticketJson.meta.timestamp).toLocaleString() : 'N/A';
+            if (!newSecretDataInput.value.trim() && ticketJson.data) {
+                newSecretDataInput.value = ticketJson.data;
             }
+        } catch (e) {
+            prevHashDisplay.value = '';
+            currentSlotIdDisplay.value = '';
+            originalTimestampDisplay.value = '';
+            console.error("Invalid QR Ticket Content:", e);
+        }
+    });
 
-            // --- Regenerate QR Button Click ---
-            regenerateQrBtn.addEventListener('click', () => {
-                const qrTicketContent = qrTicketContentInput.value.trim();
-                const newSecretData = newSecretDataInput.value.trim(); // New data, can be empty
-                const issuerPublicKey = issuerPublicKeyInput.value.trim();
-                const password = passwordInput.value.trim();
-                const pin = pinInput.value.trim();
+    // Upload Ticket (File)
+    uploadTicketBtn.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                qrTicketContentInput.value = e.target.result;
+                qrTicketContentInput.dispatchEvent(new Event('input')); // Trigger parsing
+            };
+            reader.readAsText(file);
+        }
+    });
 
-                // Basic Validation
-                if (!qrTicketContent) {
-                    alert('Please paste the original QR Ticket Content.');
-                    return;
-                }
-                let originalTicketJson;
-                try {
-                    originalTicketJson = JSON.parse(qrTicketContent);
-                    if (!originalTicketJson.hash2 || !originalTicketJson.issuerPublicKey || !originalTicketJson.data) {
-                        alert('Invalid QR Ticket Content: Missing required fields (hash2, issuerPublicKey, data).');
-                        return;
-                    }
-                } catch (e) {
-                    alert('Invalid QR Ticket Content: Please provide valid JSON.');
-                    return;
-                }
+    // --- New: Scan / Import QR Ticket (combined logic) ---
+    scanImportQrTicketBtn.addEventListener('click', async () => {
+        // Try to paste from clipboard first
+        try {
+            const clipboardText = await navigator.clipboard.readText();
+            if (clipboardText) {
+                qrTicketContentInput.value = clipboardText;
+                qrTicketContentInput.dispatchEvent(new Event('input')); // Trigger parsing
+                alert('Pasted QR Ticket content from clipboard!');
+                return; // If pasted, no need for QR scanner or file input
+            }
+        } catch (err) {
+            console.warn('Clipboard read failed, proceeding to QR scan/file select:', err);
+        }
 
-                if (!issuerPublicKey || !password || !pin) {
-                    alert('Please fill in your Public Key, Password, and PIN for signing.');
-                    return;
-                }
-                if (pin.length !== 4) {
-                    alert('PIN must be 4 digits.');
-                    return;
-                }
-                // (In a real system, you'd add more complex validation, e.g., signature verification)
-
-                const regeneratedData = regenerateMockQrData(originalTicketJson, newSecretData, issuerPublicKey, password, pin);
-
-                // Display results
-                regenOutputSection.style.display = 'flex';
-                regeneratedQrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(regeneratedData.qrContent)}`;
-                regeneratedQrContentDisplay.textContent = regeneratedData.qrContent;
-                newHash1Display.textContent = regeneratedData.hash1;
-                newHash2Display.textContent = regeneratedData.hash2;
-                regeneratedTimestampDisplay.textContent = new Date(regeneratedData.timestamp).toLocaleString();
-            });
-
-            // --- Export Buttons (Mockup - Reused from Mint, adjusted for Regen) ---
-            document.getElementById('exportNewTicketBtn').addEventListener('click', () => {
-                const qrContent = regeneratedQrContentDisplay.textContent;
-                if (!qrContent) { alert('Please regenerate QR content first.'); return; }
-                const filename = `DTC_RegenTicket_${new Date().getTime()}.json`;
-                const blob = new Blob([qrContent], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = filename;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                alert(`Exported New Ticket (JSON) for your regenerated QR! (Mock: ${filename})`);
-            });
-
-            document.getElementById('exportNewQrBtn').addEventListener('click', () => {
-                const qrContent = regeneratedQrCodeImage.src;
-                if (!qrContent || qrContent.includes('data:image/gif')) { alert('Please regenerate QR first.'); return; }
-                const filename = `DTC_RegenQR_${new Date().getTime()}.png`;
-                const a = document.createElement('a'); a.href = qrContent; a.download = filename;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                alert(`Exported New QR (PNG/SVG)! (Mock: ${filename})`);
-            });
-
-            document.getElementById('exportRegenLogBtn').addEventListener('click', () => {
-                const logData = {
-                    originalTicketContent: qrTicketContentInput.value,
-                    newSecretData: newSecretDataInput.value,
-                    issuerPublicKey: issuerPublicKeyInput.value,
-                    newHash1: newHash1Display.textContent,
-                    newHash2: newHash2Display.textContent,
-                    regeneratedAt: regeneratedTimestampDisplay.textContent
-                };
-                if (!logData.newHash2) { alert('Please regenerate QR first.'); return; }
-                const filename = `DTC_RegenLog_${new Date().getTime()}.json`;
-                const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = filename;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                alert(`Exported Regeneration Log! (Mock: ${filename})`);
-            });
+        // If clipboard is empty or failed, show QR scanner
+        if (qrReader) {
+            try { qrReader.stop().catch(e => console.warn("Error stopping QR reader:", e)); } catch {}
+        }
+        qrReaderContainer.style.display = 'block';
+        qrReader = new Html5Qrcode("qr-reader");
+        qrReader.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 200 },
+            (qrCodeMessage) => {
+                qrTicketContentInput.value = qrCodeMessage;
+                qrTicketContentInput.dispatchEvent(new Event('input')); // Trigger parsing
+                qrReader.stop();
+                qrReaderContainer.style.display = 'none';
+            },
+            (errorMessage) => {
+                // Do nothing for continuous errors, only log if needed for debug
+            }
+        ).catch(err => {
+            alert("Cannot open camera for QR scan. You can still paste or import from file.");
+            qrReaderContainer.style.display = 'none';
         });
-    </script>
+
+        // Optionally, if camera fails/user wants to, offer file upload directly
+        // This is already available via the "uploadTicketBtn", so we keep it separate for clarity.
+    });
+
+
+    // SHA256 Helper (hex)
+    async function sha256Hex(str) {
+        const buf = new TextEncoder().encode(str);
+        const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+        return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // PREVIEW: Compose preview and show modal
+    previewBtn.addEventListener('click', async () => {
+        const qrTicketContent = qrTicketContentInput.value.trim();
+        const newSecretData = newSecretDataInput.value.trim();
+        const issuerPublicKey = issuerPublicKeyInput.value.trim();
+        const password = passwordInput.value.trim();
+        const pin = pinInput.value.trim();
+
+        // Validation
+        if (!qrTicketContent) { alert('Please paste the original QR Ticket Content.'); return; }
+        let originalTicketJson;
+        try {
+            originalTicketJson = JSON.parse(qrTicketContent);
+            if (!originalTicketJson.hash2 || !originalTicketJson.issuerPublicKey || !originalTicketJson.data) {
+                alert('Invalid QR Ticket Content: Missing required fields (hash2, issuerPublicKey, data).');
+                return;
+            }
+        } catch (e) { alert('Invalid QR Ticket Content: Please provide valid JSON.'); return; }
+        if (!issuerPublicKey || !password || !pin) { alert('Please fill in your Public Key, Password, and PIN for signing.'); return; }
+        if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { alert('PIN must be 4 digits.'); return; }
+
+        // DTC chain meta for regen
+        const now = new Date();
+        const timestamp = now.toISOString();
+        const newNonce = Math.random().toString(36).substring(2, 10);
+
+        // prevHash2 = hash2 of previous (QR chain linkage)
+        const prevHash2 = originalTicketJson.hash2;
+        const originalBatchName = originalTicketJson.meta?.batchName || 'N/A';
+        const originalQuantity = originalTicketJson.meta?.quantity || 1;
+        const originalSlotId = originalTicketJson.meta?.slotId || 'N/A';
+        const finalData = newSecretData.trim() === '' ? originalTicketJson.data : newSecretData;
+
+        // 1. New Hash1: SHA256(issuerPublicKey|finalData|batchName|quantity|timestamp|slotId|nonce|prevHash2)
+        const hash1_input = issuerPublicKey + '|' + finalData + '|' + originalBatchName + '|' + originalQuantity + '|' + timestamp + '|' + originalSlotId + '|' + newNonce + '|' + prevHash2;
+        const newHash1 = await sha256Hex(hash1_input);
+
+        // 2. New Hash2: SHA256(newHash1|timestamp|nonce|prevHash2)
+        const newHash2 = await sha256Hex(newHash1 + '|' + timestamp + '|' + newNonce + '|' + prevHash2);
+
+        // 3. Preview object
+        pendingRegen = {
+            version: "DTC_0.7.6.1",
+            type: "QR_Regenerate",
+            issuerPublicKey: issuerPublicKey, // The current issuer who is regenerating
+            data: finalData, // The new or existing secret data
+            meta: {
+                batchName: originalBatchName,
+                quantity: originalQuantity,
+                timestamp: timestamp, // Timestamp of this regeneration
+                slotId: originalSlotId,
+                nonce: newNonce,
+                prev_hash: prevHash2 // The hash2 of the original/previous ticket
+            },
+            hash1: newHash1,
+            hash2: newHash2,
+            originalIssuerPublicKey: originalTicketJson.issuerPublicKey, // Original issuer of the ticket
+            signature: "0xMOCK_REGEN_SIGNATURE" // Placeholder for actual signature
+        };
+        // Show modal
+        previewDetails.innerHTML = `
+          <b>Issuer Public Key:</b> <span style="color:#246bfd;">${issuerPublicKey}</span><br>
+          <b>Batch Name:</b> ${originalBatchName}<br>
+          <b>Quantity:</b> ${originalQuantity}<br>
+          <b>Prev Hash2:</b> <span style="color:#2196f3">${prevHash2}</span><br>
+          <b>Slot ID:</b> ${originalSlotId}<br>
+          <b>New Content:</b> <span style="color:#26733e;">${finalData}</span><br>
+          <b>Password:</b> <span style="color:#90a4ae;">•••••</span> &nbsp; <b>PIN:</b> <span style="color:#90a4ae;">••••</span>
+          <hr>
+          <b>Preview (JSON):</b>
+          <pre style="color:#246bfd;">${JSON.stringify(pendingRegen, null, 2)}</pre>
+        `;
+        previewModal.style.display = 'flex';
+    });
+
+    cancelPreviewBtn.onclick = ()=>{ previewModal.style.display='none'; };
+
+    confirmBtn.onclick = ()=> {
+      previewModal.style.display = 'none';
+      if (!pendingRegen) return;
+
+      // Simulate saving log entry (for demo)
+      let regenLogs = JSON.parse(localStorage.getItem('dtc_regenLogs')) || [];
+      const logEntry = {
+          regeneratedTicket: pendingRegen,
+          originalTicketHash2: prevHashDisplay.value, // Capture the prev_hash directly for the log
+          meta: regenLogMeta // Include the general regen meta
+      };
+      regenLogs.push(logEntry);
+      localStorage.setItem('dtc_regenLogs', JSON.stringify(regenLogs));
+
+
+      regenOutputSection.style.display = 'flex';
+      regeneratedQrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(JSON.stringify(pendingRegen))}`;
+      regeneratedQrContentDisplay.textContent = JSON.stringify(pendingRegen, null, 2);
+      newHash1Display.textContent = pendingRegen.hash1;
+      newHash2Display.textContent = pendingRegen.hash2;
+      regeneratedTimestampDisplay.textContent = new Date(pendingRegen.meta.timestamp).toLocaleString();
+    };
+
+    // Export Buttons
+    document.getElementById('exportNewTicketBtn').addEventListener('click', () => {
+        const qrContent = regeneratedQrContentDisplay.textContent;
+        if (!qrContent) return;
+        const filename = `DTC_RegenTicket_${new Date().getTime()}.json`;
+        const blob = new Blob([qrContent], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    });
+    document.getElementById('exportNewQrBtn').addEventListener('click', () => {
+        const qrContent = regeneratedQrCodeImage.src;
+        if (!qrContent || qrContent.includes('data:image/gif')) return;
+        const filename = `DTC_RegenQR_${new Date().getTime()}.png`;
+        const a = document.createElement('a'); a.href = qrContent; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+
+    // --- Modified: Export Regen Log Button ---
+    exportRegenLogBtn.addEventListener('click', () => {
+        if (!pendingRegen) {
+            alert("No regenerated data to export log for.");
+            return;
+        }
+
+        // Create the log object as required
+        const logData = {
+            action: "QR_Regenerate_Log",
+            timestamp: pendingRegen.meta.timestamp, // Use the regenerated timestamp
+            issuerPublicKey: pendingRegen.issuerPublicKey,
+            originalTicketHash2: prevHashDisplay.value, // This is the prev_hash (hash2 of original)
+            newHash1: pendingRegen.hash1,
+            newHash2: pendingRegen.hash2,
+            meta: regenLogMeta // Include the application/device meta
+        };
+
+        const filename = `DTC_RegenLog_${new Date().getTime()}.json`;
+        const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        alert("Regeneration log exported!");
+    });
+});
+</script>
 </body>
 </html>
