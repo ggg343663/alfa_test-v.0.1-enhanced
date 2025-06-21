@@ -39,6 +39,7 @@
         .block-general { border-left-color: #43a047; }
         .block-register { border-left-color: #1976d2; }
         .block-audit { border-left-color: #ffc107; }
+        .block-docs { border-left-color: #78909c; } /* New color for docs section */
         .block-title {
             font-size: 1em;
             font-weight: 600;
@@ -68,11 +69,11 @@
             text-decoration: none;
             letter-spacing: 0.01em;
             cursor: pointer;
-            /* Removed gap as filename span is removed */
         }
         .block-general a { background: #43a047; }
         .block-register a { background: #1976d2; }
         .block-audit a { background: #ffc107; color: #212121;}
+        .block-docs a { background: #607d8b; } /* Background for docs links */
         .menu-block a:hover:not(.disabled) {
             filter: brightness(1.09) contrast(1.09);
             transform: translateY(-1px) scale(1.01);
@@ -151,7 +152,7 @@
     </style>
 </head>
 <body>
-    <h1>DTC: Magic Chain System</h1>
+    <h1>Decentralized Trust Community (DTC): Magic Chain System</h1>
 
     <div class="menu-block block-general">
         <div class="block-title">1. General & Key Management</div>
@@ -164,9 +165,12 @@
 
     <div class="menu-block block-register">
         <div class="block-title">2. Node Registration</div>
+        <!-- Implicit Genesis is handled by register_master.html -->
         <a href="register_master.html"><span class="label">Register Master Node</span></a>
         <a href="register_agent.html"><span class="label">Register Agent Node</span></a>
         <a href="register_qr_deterministic.html"><span class="label">Register QR</span></a>
+        <a href="master_dashboard.html"><span class="label">Master Dashboard</span></a>
+        <a href="agent_dashboard.html"><span class="label">Agent Dashboard</span></a>
     </div>
 
     <div class="menu-block block-audit">
@@ -174,6 +178,13 @@
         <a href="verify_qr.html"><span class="label">Check QR Status</span></a>
         <a href="audit_chain.html"><span class="label">Audit Chain</span></a>
         <a href="commit_log.html"><span class="label">Commit Log (Double Hash)</span></a>
+    </div>
+
+    <!-- New section for Whitepaper & Documents -->
+    <div class="menu-block block-docs">
+        <div class="block-title">4. Whitepaper & Document</div>
+        <a href="whitepaper.html"><span class="label">Whitepaper</span></a>
+        <a href="document.html"><span class="label">Document</span></a>
     </div>
 
     <div class="nav-bar">
